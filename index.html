@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dag van de Week</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/365/365571.png">
+</head>
+<body>
+    <div class="container">
+        <h1>📅 Dag van de Week</h1>
+        
+        <div class="selectors">
+            <div>
+                <label>Dag</label>
+                <select id="daySelect"></select>
+            </div>
+            <div>
+                <label>Maand</label>
+                <select id="monthSelect"></select>
+            </div>
+            <div>
+                <label>Jaar</label>
+                <select id="yearSelect"></select>
+            </div>
+        </div>
+
+        <button class="btn secondary" id="calendarBtn">📆 Kalender openen</button>
+
+        <div class="date-display" id="dateDisplay">15 juli 2026</div>
+        <div class="day-result" id="dayResult">Donderdag</div>
+
+        <button class="btn primary" id="copyBtn">📋 Kopieer dag</button>
+
+        <h2>Recente data</h2>
+        <div id="history" class="history"></div>
+    </div>
+
+    <input type="date" id="datePicker" style="display:none;">
+
+    <script src="script.js"></script>
+</body>
+</html>

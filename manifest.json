@@ -1,0 +1,16 @@
+{
+    "name": "Dag van de Week",
+    "short_name": "Dag van de Week",
+    "description": "Vind snel de dag van de week voor elke historische datum",
+    "start_url": "index.html",
+    "display": "standalone",
+    "background_color": "#667eea",
+    "theme_color": "#667eea",
+    "icons": [
+        {
+            "src": "https://cdn-icons-png.flaticon.com/512/365/365571.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
