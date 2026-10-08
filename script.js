@@ -21,6 +21,7 @@ const maanden = [
 
 let viewDate = new Date();
 let selectedDate = null;
+let selectedDates = [];
 let selectedWeek = null;
 
 function pad(value) {
@@ -161,6 +162,7 @@ function clearOtherRows(activeRow) {
     }
 
     selectedDate = null;
+    selectedDates = [];
     selectedWeek = null;
 }
 
@@ -242,6 +244,48 @@ function parseDescription(value) {
             .replace(/3e/g, 'derde')
             .replace(/\s+/g, ' ')
             .trim();
+
+        // Zoek op alleen een jaar + een feestdaggroep en toon beide dagen.
+        const groupAliases = [
+            ['pasen', 'Eerste Paasdag'],
+            ['pinksteren', 'Eerste Pinksterdag'],
+            ['kerst', 'Eerste Kerstdag']
+        ];
+
+        for (const [alias, firstHolidayName] of groupAliases) {
+            if (normalized.includes(alias)) {
+                const dates = [];
+                const secondNames = {
+                    'Eerste Paasdag': 'Tweede Paasdag',
+                    'Eerste Pinksterdag': 'Tweede Pinksterdag',
+                    'Eerste Kerstdag': 'Tweede Kerstdag'
+                };
+                for (const [key, name] of holidays) {
+                    if (name === firstHolidayName || name === secondNames[firstHolidayName]) {
+                        const parts = key.split('-').map(Number);
+                        dates.push(new Date(parts[0], parts[1] - 1, parts[2]));
+                    }
+                }
+                if (dates.length === 2) {
+                    dates.sort((a, b) => a - b);
+                    // Toon de maand waarin de eerste dag valt en markeer beide dagen.
+                    setDateInputs(dates[0]);
+                    selectedDate = null;
+                    selectedWeek = null;
+                    viewDate = new Date(dates[0].getFullYear(), dates[0].getMonth(), 1);
+                    renderCalendar();
+
+                    const first = dates[0];
+                    const second = dates[1];
+                    dayInput.value = '';
+                    monthInput.value = '';
+                    yearInput.value = year;
+                    selectedDates = dates;
+                    renderCalendar();
+                    return { dates };
+                }
+            }
+        }
 
         const holidayAliases = [
             ['koninginnedag', 'Koninginnedag'],
@@ -395,6 +439,10 @@ function renderCalendar() {
 
         if (selectedDate) {
             highlight = toDateKey(cellDate) === toDateKey(selectedDate);
+        }
+
+        if (selectedDates.length) {
+            highlight = selectedDates.some(date => toDateKey(cellDate) === toDateKey(date));
         }
 
         if (selectedWeek) {
