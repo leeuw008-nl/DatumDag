@@ -394,8 +394,18 @@ async function loadOudOmmenEventMarkers(startDate, endDate, monthKey) {
     try {
         const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
         if (!response.ok) throw new Error('OudOmmen request failed');
-        const posts = await response.json();
-        posts.forEach(post => {
+        const firstPage = await response.json();
+        const totalPages = Math.min(Number(response.headers.get('X-WP-TotalPages')) || 1, 20);
+        const pages = [firstPage];
+
+        for (let page = 2; page <= totalPages; page++) {
+            const pageUrl = url + '&page=' + page;
+            const pageResponse = await fetch(pageUrl, { headers: { 'Accept': 'application/json' } });
+            if (!pageResponse.ok) break;
+            pages.push(await pageResponse.json());
+        }
+
+        pages.flat().forEach(post => {
             const date = post.date?.slice(0, 10);
             if (!date) return;
             oudOmmenEventDates.add(date);
@@ -448,6 +458,81 @@ function renderHolidayList(year, month) {
         item.textContent = `${holiday.date.getDate()} ${maanden[holiday.date.getMonth()]} – ${holiday.name}`;
         holidayList.appendChild(item);
     });
+}
+
+async function loadHistoricalEvents(date) {
+    const key = toDateKey(date);
+    const rows = [];
+
+    // OudOmmen: gebruik eerst de al geladen maandgegevens.
+    if (sourceOudOmmen.checked) {
+        const cached = oudOmmenEventDetails.get(key);
+        if (cached) {
+            rows.push(...cached.map(row => ({ ...row, source: 'OudOmmen.nl' })));
+        }
+    }
+
+    // Wikidata: haal de details pas op wanneer een specifieke dag wordt gekozen.
+    if (sourceWikidata.checked) {
+        const query = 'SELECT DISTINCT ?item ?itemLabel ?description WHERE { ' +
+            '?item wdt:P585 ?date. ' +
+            'FILTER(?date >= "' + key + 'T00:00:00Z"^^xsd:dateTime && ?date < "' + key + 'T23:59:59Z"^^xsd:dateTime) ' +
+            'FILTER(EXISTS { ?item wdt:P17 wd:Q55. } || EXISTS { ?item wdt:P276/wdt:P17 wd:Q55. } || EXISTS { ?item wdt:P19/wdt:P17 wd:Q55. }) ' +
+            'OPTIONAL { ?item schema:description ?description. FILTER(LANG(?description) = "nl") } ' +
+            'SERVICE wikibase:label { bd:serviceParam wikibase:language "nl,en". } ' +
+            '} LIMIT 100';
+
+        try {
+            const response = await fetch('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(query), {
+                headers: { 'Accept': 'application/sparql-results+json' }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                (data.results?.bindings || []).forEach(row => {
+                    rows.push({
+                        source: 'Wikidata',
+                        item: row.item?.value || '',
+                        label: row.itemLabel?.value || 'Wikidata',
+                        description: row.description?.value || ''
+                    });
+                });
+            }
+        } catch (error) {
+            // De overige bronnen blijven bruikbaar als Wikidata tijdelijk niet bereikbaar is.
+        }
+    }
+
+    // Als OudOmmen voor deze datum nog niet in de maandcache zit,
+    // haal de publicaties van die dag rechtstreeks op.
+    if (sourceOudOmmen.checked && !oudOmmenEventDetails.has(key)) {
+        const nextDay = addDays(date, 1);
+        const apiStart = key + 'T00:00:00';
+        const apiEnd = toDateKey(nextDay) + 'T00:00:00';
+        const url = 'https://weblog.oudommen.nl/wp-json/wp/v2/posts?after=' +
+            encodeURIComponent(apiStart) +
+            '&before=' + encodeURIComponent(apiEnd) +
+            '&per_page=100&orderby=date&order=asc&status=publish&_fields=date,date_gmt,link,title';
+
+        try {
+            const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            if (response.ok) {
+                const posts = await response.json();
+                const mapped = posts
+                    .filter(post => (post.date || '').slice(0, 10) === key)
+                    .map(post => ({
+                        item: post.link || '',
+                        label: post.title?.rendered || 'OudOmmen.nl',
+                        description: ''
+                    }));
+                oudOmmenEventDetails.set(key, mapped);
+                rows.push(...mapped.map(row => ({ ...row, source: 'OudOmmen.nl' })));
+            }
+        } catch (error) {
+            // De kalender blijft bruikbaar als OudOmmen tijdelijk niet bereikbaar is.
+        }
+    }
+
+    renderHistoricalEventDetails(rows);
 }
 
 function renderHistoricalEventDetails(rows) {
