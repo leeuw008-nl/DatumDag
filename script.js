@@ -10,6 +10,7 @@ const calendarMonth = document.getElementById('calendarMonth');
 const calendarWeekInfo = document.getElementById('calendarWeekInfo');
 const prevMonth = document.getElementById('prevMonth');
 const nextMonth = document.getElementById('nextMonth');
+const holidayList = document.getElementById('holidayList');
 
 const maanden = [
     'januari','februari','maart','april','mei','juni',
@@ -235,6 +236,39 @@ function parseDescription(value) {
     }
 }
 
+function renderHolidayList(year, month) {
+    const holidays = getDutchHolidays(year);
+    const monthHolidays = [];
+
+    holidays.forEach((name, key) => {
+        const parts = key.split('-').map(Number);
+        if (parts[0] === year && parts[1] === month + 1) {
+            monthHolidays.push({
+                date: new Date(parts[0], parts[1] - 1, parts[2]),
+                name
+            });
+        }
+    });
+
+    monthHolidays.sort((a, b) => a.date - b.date);
+
+    holidayList.innerHTML = '';
+
+    if (monthHolidays.length === 0) {
+        holidayList.style.display = 'none';
+        return;
+    }
+
+    holidayList.style.display = 'block';
+
+    monthHolidays.forEach(holiday => {
+        const item = document.createElement('div');
+        item.className = 'holiday-item';
+        item.textContent = `${holiday.date.getDate()} ${maanden[holiday.date.getMonth()]} – ${holiday.name}`;
+        holidayList.appendChild(item);
+    });
+}
+
 function renderCalendar() {
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
@@ -250,6 +284,7 @@ function renderCalendar() {
     }
 
     calendar.innerHTML = '';
+    renderHolidayList(year, month);
 
     const firstDay = new Date(year, month, 1);
     const startOffset = (firstDay.getDay() + 6) % 7;
