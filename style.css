@@ -375,3 +375,8 @@ input:focus, select:focus {
         padding: 7px;
     }
 }
+
+/* Wanneer de handleiding open is, wordt de rest van de app verborgen. */
+body.info-open main {
+    display: none;
+}
