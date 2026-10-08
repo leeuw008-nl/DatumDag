@@ -385,11 +385,12 @@ async function fetchOudOmmenJson(url) {
 }
 
 async function fetchOudOmmenTotal() {
-    const url = 'https://weblog.oudommen.nl/wp-json/wp/v2/posts?per_page=1&_fields=id';
-    const proxy = 'https://ommen-push-v2.leeuw008.workers.dev/proxy?url=' + encodeURIComponent(url) + '&t=' + Date.now();
+    const proxy = 'https://ommen-push-v2.leeuw008.workers.dev/oudommen-count?t=' + Date.now();
     try {
         const response = await fetch(proxy, { cache: 'no-store' });
-        const total = Number(response.headers.get('X-WP-Total') || 0);
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const data = await response.json();
+        const total = Number(data.total || 0);
         if (total > 0) oudOmmenTotalCount = total;
     } catch (error) {}
     updateOudOmmenCount();
