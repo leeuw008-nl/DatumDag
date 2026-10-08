@@ -146,6 +146,21 @@ function clearDateInputs() {
     yearInput.value = '';
 }
 
+function clearOtherRows(activeRow) {
+    if (activeRow !== 'date') {
+        clearDateInputs();
+    }
+    if (activeRow !== 'week') {
+        clearWeekInputs();
+    }
+    if (activeRow !== 'description') {
+        descriptionInput.value = '';
+    }
+
+    selectedDate = null;
+    selectedWeek = null;
+}
+
 function validDateFromInputs() {
     const day = Number(dayInput.value);
     const month = Number(monthInput.value);
@@ -360,17 +375,21 @@ function renderCalendar() {
     }
 }
 
+dayInput.addEventListener('focus', () => clearOtherRows('date'));
+monthInput.addEventListener('focus', () => clearOtherRows('date'));
+yearInput.addEventListener('focus', () => clearOtherRows('date'));
+
 dayInput.addEventListener('input', updateFromDate);
 monthInput.addEventListener('change', updateFromDate);
 yearInput.addEventListener('input', updateFromDate);
 
+weekInput.addEventListener('focus', () => clearOtherRows('week'));
+weekYearInput.addEventListener('focus', () => clearOtherRows('week'));
+
 weekInput.addEventListener('input', updateFromWeek);
 weekYearInput.addEventListener('input', updateFromWeek);
 
-descriptionInput.addEventListener('input', () => {
-    clearDateInputs();
-    clearWeekInputs();
-});
+descriptionInput.addEventListener('focus', () => clearOtherRows('description'));
 
 descriptionInput.addEventListener('change', () => {
     parseDescription(descriptionInput.value);
