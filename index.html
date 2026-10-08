@@ -10,35 +10,50 @@
 </head>
 <body>
     <div class="container">
-        <h1>📅 Dag van de Week</h1>
-        
-        <div class="selectors">
-            <div>
-                <label>Dag</label>
-                <select id="daySelect"></select>
-            </div>
-            <div>
-                <label>Maand</label>
-                <select id="monthSelect"></select>
-            </div>
-            <div>
-                <label>Jaar</label>
-                <select id="yearSelect"></select>
-            </div>
-        </div>
+        <header>
+            <h1>Dag van de Week</h1>
+        </header>
 
-        <button class="btn secondary" id="calendarBtn">📆 Kalender openen</button>
+        <main>
+            <section class="input-section">
+                <div class="input-row date-row">
+                    <label>Datum</label>
+                    <input type="number" id="dayInput" min="1" max="31" placeholder="Dag">
+                    <select id="monthInput" aria-label="Maand"></select>
+                    <input type="number" id="yearInput" min="1000" max="2100" placeholder="Jaar">
+                </div>
 
-        <div class="date-display" id="dateDisplay">15 juli 2026</div>
-        <div class="day-result" id="dayResult">Donderdag</div>
+                <div class="input-row week-row">
+                    <label>Week</label>
+                    <input type="number" id="weekInput" min="1" max="53" placeholder="Weeknummer">
+                    <input type="number" id="weekYearInput" min="1000" max="2100" placeholder="Jaar">
+                </div>
 
-        <button class="btn primary" id="copyBtn">📋 Kopieer dag</button>
+                <div class="input-row description-row">
+                    <label for="descriptionInput">Omschrijving</label>
+                    <input type="text" id="descriptionInput"
+                           placeholder="bijv. 22 januari 1967 of afgelopen woensdag">
+                </div>
+            </section>
 
-        <h2>Recente data</h2>
-        <div id="history" class="history"></div>
+            <section class="calendar-section">
+                <div class="calendar-header">
+                    <button id="prevMonth" aria-label="Vorige maand">‹</button>
+                    <div>
+                        <strong id="calendarMonth"></strong>
+                        <span id="calendarWeekInfo"></span>
+                    </div>
+                    <button id="nextMonth" aria-label="Volgende maand">›</button>
+                </div>
+
+                <div class="weekday-header">
+                    <span>ma</span><span>di</span><span>wo</span>
+                    <span>do</span><span>vr</span><span>za</span><span>zo</span>
+                </div>
+                <div id="calendar" class="calendar"></div>
+            </section>
+        </main>
     </div>
-
-    <input type="date" id="datePicker" style="display:none;">
 
     <script src="script.js"></script>
 </body>
