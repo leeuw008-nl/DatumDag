@@ -388,32 +388,65 @@ async function loadWikidataEventMarkers(startDate, endDate, monthKey) {
     }
 }
 
-async function loadOudOmmenFeed() {
-    if (oudOmmenFeedPromise) return oudOmmenFeedPromise;
-
-    oudOmmenFeedPromise = (async () => {
-        try {
-            const response = await fetch('./oudommen-events.json?v=20261008', { cache: 'no-store' });
-            if (!response.ok) throw new Error('OudOmmen feed niet beschikbaar');
-            const posts = await response.json();
-            if (!Array.isArray(posts)) return;
-
-            posts.forEach(post => {
-                const date = (post.date || '').slice(0, 10);
-                if (!date) return;
-                oudOmmenEventDates.add(date);
-                if (!oudOmmenEventDetails.has(date)) oudOmmenEventDetails.set(date, []);
-                oudOmmenEventDetails.get(date).push({
-                    item: post.link || '',
-                    label: post.title || 'OudOmmen.nl'
-                });
-            });
-        } catch (error) {
-            // De kalender blijft bruikbaar als de lokale OudOmmen-feed tijdelijk niet beschikbaar is.
+async function fetchOudOmmenXml(url) {
+    const proxy = 'https://ommen-push-v2.leeuw008.workers.dev/proxy?url=' + encodeURIComponent(url) + '&t=' + Date.now();
+    try {
+        const response = await fetch(proxy, { cache: 'no-store' });
+        if (!response.ok) throw new Error('OudOmmen proxy HTTP ' + response.status);
+        const xml = await response.text();
+        if (!xml || xml.length < 200 || (!xml.includes('<rss') && !xml.includes('<feed'))) {
+            throw new Error('OudOmmen RSS ongeldig');
         }
-    })();
+        return xml;
+    } catch (error) {
+        return '';
+    }
+}
 
-    return oudOmmenFeedPromise;
+function parseOudOmmenRss(xml) {
+    if (!xml) return [];
+    let items = [...xml.matchAll(/<item[^>]*>([\\s\\S]*?)<\\/item>/gi)];
+    if (!items.length) items = [...xml.matchAll(/<entry[^>]*>([\\s\\S]*?)<\\/entry>/gi)];
+
+    return items.map(match => {
+        const item = match[0];
+        let title = (item.match(/<title[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/title>/i) || [])[1] || '';
+        title = title.replace(/<[^>]*>/g, '').trim();
+
+        let link = (item.match(/<link[^>]*>([\\s\\S]*?)<\\/link>/i) || [])[1] || '';
+        if (!link || link.includes('<')) {
+            const href = item.match(/<link[^>]+href=["']([^"']+)["']/i);
+            if (href) link = href[1];
+        }
+        link = link.replace(/<!\\[CDATA\\[/g, '').replace(/\\]\\]>/g, '').trim();
+
+        let pub = (item.match(/<(pubDate|published|updated)[^>]*>([\\s\\S]*?)<\\/(pubDate|published|updated)>/i) || [])[2] || '';
+
+        return {
+            date: pub ? new Date(pub) : null,
+            title,
+            link
+        };
+    }).filter(post => post.date && !isNaN(post.date.getTime()) && post.title && post.link);
+}
+
+async function loadOudOmmenFeed() {
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth() + 1;
+    const archiveFeed = 'https://weblog.oudommen.nl/' + year + '/' + pad(month) + '/feed/';
+
+    const xml = await fetchOudOmmenXml(archiveFeed);
+    const posts = parseOudOmmenRss(xml);
+
+    posts.forEach(post => {
+        const date = toDateKey(post.date);
+        oudOmmenEventDates.add(date);
+        if (!oudOmmenEventDetails.has(date)) oudOmmenEventDetails.set(date, []);
+        oudOmmenEventDetails.get(date).push({
+            item: post.link,
+            label: post.title
+        });
+    });
 }
 
 async function loadOudOmmenEventMarkers(startDate, endDate, monthKey) {
