@@ -143,6 +143,7 @@ function clearWeekInputs() {
 
 function clearDateInputs() {
     dayInput.value = '';
+    monthInput.value = '';
     yearInput.value = '';
 }
 
