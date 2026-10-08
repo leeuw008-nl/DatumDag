@@ -342,22 +342,29 @@ async function loadHistoricalEventMarkers(year, month) {
     const nextMonth = new Date(year, month + 1, 1);
     const endDate = `${nextMonth.getFullYear()}-${pad(nextMonth.getMonth() + 1)}-01T00:00:00Z`;
 
-    const loaders = [];
-    if (sourceWikidata.checked) loaders.push(loadWikidataEventMarkers(startDate, endDate, monthKey));
-    if (sourceOudOmmen.checked) loaders.push(loadOudOmmenEventMarkers(startDate, endDate, monthKey));
-
-    if (!loaders.length) {
+    if (!sourceWikidata.checked && !sourceOudOmmen.checked) {
         historicalEventsMonthKey = monthKey;
         calendarSection.classList.add('events-loaded');
         renderCalendar();
         return;
     }
 
-    sourceLoadingCount = loaders.length;
-    await Promise.allSettled(loaders);
+    // OudOmmen eerst: deze bron is doorgaans sneller en levert direct de O-markers.
+    if (sourceOudOmmen.checked) {
+        await loadOudOmmenEventMarkers(startDate, endDate, monthKey);
+        if (historicalEventsMonthKey === monthKey) {
+            historicalEventDates = new Set([...oudOmmenEventDates, ...wikidataEventDates]);
+            renderCalendar();
+        }
+    }
+
+    // Wikidata daarna. De kalender blijft intussen bruikbaar.
+    if (sourceWikidata.checked) {
+        await loadWikidataEventMarkers(startDate, endDate, monthKey);
+    }
 
     if (historicalEventsMonthKey === monthKey) {
-        historicalEventDates = new Set([...wikidataEventDates, ...oudOmmenEventDates]);
+        historicalEventDates = new Set([...oudOmmenEventDates, ...wikidataEventDates]);
         calendarSection.classList.add('events-loaded');
         renderCalendar();
     }
@@ -383,7 +390,7 @@ async function loadWikidataEventMarkers(startDate, endDate, monthKey) {
 async function loadOudOmmenEventMarkers(startDate, endDate, monthKey) {
     const apiStart = startDate.slice(0, 10) + 'T00:00:00';
     const apiEnd = endDate.slice(0, 10) + 'T23:59:59';
-    const url = 'https://weblog.oudommen.nl/wp-json/wp/v2/posts?after=' + encodeURIComponent(apiStart) + '&before=' + encodeURIComponent(apiEnd) + '&per_page=100&_fields=date,link,title';
+    const url = 'https://weblog.oudommen.nl/wp-json/wp/v2/posts?after=' + encodeURIComponent(apiStart) + '&before=' + encodeURIComponent(apiEnd) + '&per_page=100&orderby=date&order=asc&status=publish&_fields=date,date_gmt,link,title';
     try {
         const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
         if (!response.ok) throw new Error('OudOmmen request failed');
@@ -540,7 +547,10 @@ function renderCalendar() {
         }
 
         const holidayName = getDutchHolidays(cellDate.getFullYear()).get(toDateKey(cellDate));
-        const hasHistoricalEvent = historicalEventDates.has(toDateKey(cellDate));
+        const dateKey = toDateKey(cellDate);
+        const hasWikidataEvent = sourceWikidata.checked && wikidataEventDates.has(dateKey);
+        const hasOudOmmenEvent = sourceOudOmmen.checked && oudOmmenEventDates.has(dateKey);
+        const hasHistoricalEvent = hasWikidataEvent || hasOudOmmenEvent;
 
         if (holidayName) {
             button.classList.add('holiday');
@@ -549,10 +559,25 @@ function renderCalendar() {
 
         if (hasHistoricalEvent) {
             button.classList.add('historical-event');
-            button.title = holidayName ? holidayName + ' · historische gebeurtenis beschikbaar' : 'Historische gebeurtenis beschikbaar';
+            const sources = [];
+            if (hasWikidataEvent) sources.push('Wikidata');
+            if (hasOudOmmenEvent) sources.push('OudOmmen');
+            button.title = holidayName ? holidayName + ' · ' + sources.join(' + ') : sources.join(' + ');
             const marker = document.createElement('span');
-            marker.className = 'historical-event-dot';
+            marker.className = 'historical-event-markers';
             marker.setAttribute('aria-hidden', 'true');
+            if (hasWikidataEvent) {
+                const w = document.createElement('span');
+                w.className = 'historical-event-letter wikidata';
+                w.textContent = 'W';
+                marker.appendChild(w);
+            }
+            if (hasOudOmmenEvent) {
+                const o = document.createElement('span');
+                o.className = 'historical-event-letter oudommen';
+                o.textContent = 'O';
+                marker.appendChild(o);
+            }
             button.appendChild(marker);
         }
 
