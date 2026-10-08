@@ -656,7 +656,7 @@ function renderCalendar() {
             button.title = holidayName ? holidayName + ' · OudOmmen.nl' : 'OudOmmen.nl';
             const marker = document.createElement('span');
             marker.className = 'oudommen-event-marker';
-            marker.textContent = 'O';
+            marker.setAttribute('aria-label', 'OudOmmen.nl');
             button.appendChild(marker);
         }
         if (holidayName) {
