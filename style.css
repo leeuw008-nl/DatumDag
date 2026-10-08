@@ -432,3 +432,18 @@ body.info-open main {
 
 
 .calendar-day.historical-event .historical-event-markers{position:absolute;left:50%;bottom:1px;transform:translateX(-50%);display:flex;gap:2px;line-height:1;pointer-events:none}.calendar-day.historical-event .historical-event-letter{font-size:7px;font-weight:800;min-width:7px;text-align:center}.calendar-day.historical-event .historical-event-letter.wikidata{color:#4f46a5}.calendar-day.historical-event .historical-event-letter.oudommen{color:#2f7d32}.calendar-day.highlight.historical-event .historical-event-letter{color:white}
+
+/* Explicitly render the day number inside each calendar cell. */
+.calendar-day-number {
+    display: block;
+    position: relative;
+    z-index: 2;
+    color: #222;
+    font-size: 0.95rem;
+    line-height: 1;
+    visibility: visible;
+    opacity: 1;
+}
+.calendar-day.highlight .calendar-day-number {
+    color: white;
+}
