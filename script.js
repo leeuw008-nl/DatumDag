@@ -381,6 +381,40 @@ async function fetchOudOmmenJson(url) {
     }
 }
 
+async function fetchOudOmmenFeed() {
+    const feedUrl = 'https://weblog.oudommen.nl/feed/';
+    const proxy = 'https://ommen-push-v2.leeuw008.workers.dev/proxy?url=' + encodeURIComponent(feedUrl) + '&t=' + Date.now();
+    try {
+        const response = await fetch(proxy, { cache: 'no-store' });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const xml = await response.text();
+        const doc = new DOMParser().parseFromString(xml, 'application/xml');
+        return Array.from(doc.querySelectorAll('item')).map(item => ({
+            date: item.querySelector('pubDate')?.textContent || '',
+            link: item.querySelector('link')?.textContent || '',
+            title: item.querySelector('title')?.textContent || 'OudOmmen-artikel'
+        }));
+    } catch (error) {
+        return [];
+    }
+}
+
+function addOudOmmenPost(post) {
+    const date = new Date(post.date);
+    if (isNaN(date.getTime())) return;
+    const key = toDateKey(date);
+    oudOmmenEventDates.add(key);
+    const title = post.title && post.title.rendered ? post.title.rendered : (post.title || 'OudOmmen-artikel');
+    const cleanTitle = String(title)
+        .replace(/<[^>]*>/g, '')
+        .replace(/&amp;/g, '&')
+        .replace(/&#8217;/g, '’')
+        .replace(/&#8216;/g, '‘')
+        .replace(/&#038;/g, '&');
+    if (!oudOmmenEventDetails.has(key)) oudOmmenEventDetails.set(key, []);
+    oudOmmenEventDetails.get(key).push({ title: cleanTitle, link: post.link, date: post.date });
+}
+
 async function loadOudOmmenEventMarkers(year, month) {
     const monthKey = year + '-' + pad(month + 1);
     if (historicalEventsMonthKey === monthKey) return;
@@ -402,18 +436,21 @@ async function loadOudOmmenEventMarkers(year, month) {
         '&before=' + encodeURIComponent(before) +
         '&per_page=100&orderby=date&order=asc&status=publish&_fields=date,link,title';
 
-    const posts = await fetchOudOmmenJson(url);
-    posts.forEach(post => {
-        const date = new Date(post.date);
-        if (isNaN(date.getTime())) return;
-        const key = toDateKey(date);
-        oudOmmenEventDates.add(key);
-        const title = post.title && post.title.rendered ? post.title.rendered : 'OudOmmen-artikel';
-        const cleanTitle = title.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&#8217;/g, '’').replace(/&#8216;/g, '‘').replace(/&#038;/g, '&');
-        if (!oudOmmenEventDetails.has(key)) oudOmmenEventDetails.set(key, []);
-        oudOmmenEventDetails.get(key).push({ title: cleanTitle, link: post.link, date: post.date });
-    });
+    let posts = await fetchOudOmmenJson(url);
 
+    // De WordPress REST-koppeling kan incidenteel via de proxy geen JSON teruggeven.
+    // Gebruik daarom de RSS-feed als betrouwbare fallback voor recente artikelen.
+    if (!posts.length) {
+        const feedPosts = await fetchOudOmmenFeed();
+        posts = feedPosts.filter(post => {
+            const date = new Date(post.date);
+            return !isNaN(date.getTime()) &&
+                date.getFullYear() === year &&
+                date.getMonth() === month;
+        });
+    }
+
+    posts.forEach(addOudOmmenPost);
     renderCalendar();
 }
 
