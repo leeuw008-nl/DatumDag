@@ -670,6 +670,8 @@ function renderCalendar() {
         }
 
         button.addEventListener('click', () => {
+            historicalEvents.hidden = true;
+            historicalEvents.innerHTML = '';
             if (oudOmmenEventDates.has(toDateKey(cellDate))) renderOudOmmenDetails(toDateKey(cellDate));
             setDateInputs(cellDate);
             clearWeekInputs();
