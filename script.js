@@ -617,10 +617,7 @@ function renderCalendar() {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'calendar-day';
-        const dayNumberSpan = document.createElement('span');
-        dayNumberSpan.className = 'calendar-day-number';
-        dayNumberSpan.textContent = cellDate.getDate();
-        button.appendChild(dayNumberSpan);
+        button.textContent = cellDate.getDate();
 
         if (otherMonth) button.classList.add('other-month');
 
