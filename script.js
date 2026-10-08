@@ -13,6 +13,7 @@ const calendarWeekInfo = document.getElementById('calendarWeekInfo');
 const prevMonth = document.getElementById('prevMonth');
 const nextMonth = document.getElementById('nextMonth');
 const holidayList = document.getElementById('holidayList');
+const historicalEvents = document.getElementById('historicalEvents');
 
 const maanden = [
     'januari','februari','maart','april','mei','juni',
@@ -395,6 +396,35 @@ function renderHolidayList(year, month) {
     });
 }
 
+async function loadHistoricalEvents(date) {
+    historicalEvents.hidden = false;
+    historicalEvents.innerHTML = '<div class="events-status">Historische gebeurtenissen laden…</div>';
+
+    const dateString = date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 'T00:00:00Z';
+    const query = 'SELECT DISTINCT ?item ?itemLabel ?description WHERE { ?item wdt:P585 "' + dateString + '"^^xsd:dateTime. OPTIONAL { ?item schema:description ?description. FILTER(LANG(?description) = "nl") } SERVICE wikibase:label { bd:serviceParam wikibase:language "nl,en". } } LIMIT 12';
+
+    try {
+        const response = await fetch('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(query), { headers: { 'Accept': 'application/sparql-results+json' } });
+        if (!response.ok) throw new Error('Wikidata request failed');
+        const data = await response.json();
+        const rows = data.results.bindings || [];
+        historicalEvents.innerHTML = '<h3>Historische gebeurtenissen</h3>';
+        if (!rows.length) { historicalEvents.innerHTML += '<div class="events-status">Geen gebeurtenissen gevonden</div>'; return; }
+        const list = document.createElement('ul');
+        rows.forEach(row => {
+            const li = document.createElement('li');
+            const link = document.createElement('a');
+            link.href = row.item.value; link.target = '_blank'; link.rel = 'noopener';
+            link.textContent = row.itemLabel?.value || 'Gebeurtenis';
+            li.appendChild(link);
+            if (row.description?.value) li.appendChild(document.createTextNode(' – ' + row.description.value));
+            list.appendChild(li);
+        });
+        historicalEvents.appendChild(list);
+    } catch (error) {
+        historicalEvents.innerHTML = '<h3>Historische gebeurtenissen</h3><div class="events-status">Bron tijdelijk niet beschikbaar</div>';
+    }
+}
 function renderCalendar() {
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
