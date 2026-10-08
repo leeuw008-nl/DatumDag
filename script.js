@@ -754,14 +754,29 @@ prevMonth.addEventListener('click', async () => {
     historicalEventsMonthKey = '';
     historicalEvents.hidden = true;
     viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1);
+    syncDateInputsToCalendarMonth();
     renderCalendar();
     await loadOudOmmenEventMarkers(viewDate.getFullYear(), viewDate.getMonth());
 });
+
+function syncDateInputsToCalendarMonth() {
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+    let day = Number(dayInput.value) || 1;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    day = Math.min(day, daysInMonth);
+
+    dayInput.value = day;
+    monthInput.value = month;
+    yearInput.value = year;
+    selectedDate = new Date(year, month, day);
+}
 
 nextMonth.addEventListener('click', async () => {
     historicalEventsMonthKey = '';
     historicalEvents.hidden = true;
     viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1);
+    syncDateInputsToCalendarMonth();
     renderCalendar();
     await loadOudOmmenEventMarkers(viewDate.getFullYear(), viewDate.getMonth());
 });
