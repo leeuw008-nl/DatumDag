@@ -407,20 +407,8 @@ async function loadOudOmmenEventMarkers(startDate, endDate, monthKey) {
     const apiEnd = endDate.slice(0, 10) + 'T23:59:59';
     const url = 'https://weblog.oudommen.nl/wp-json/wp/v2/posts?after=' + encodeURIComponent(apiStart) + '&before=' + encodeURIComponent(apiEnd) + '&per_page=100&orderby=date&order=asc&status=publish&_fields=date,date_gmt,link,title';
     try {
-        const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
-        if (!response.ok) throw new Error('OudOmmen request failed');
-        const firstPage = await fetchOudOmmenPosts(url);
-        const totalPages = Math.min(Number(response.headers.get('X-WP-TotalPages')) || 1, 20);
-        const pages = [firstPage];
-
-        for (let page = 2; page <= totalPages; page++) {
-            const pageUrl = url + '&page=' + page;
-            const pagePosts = await fetchOudOmmenPosts(pageUrl);
-            if (!pagePosts.length) break;
-            pages.push(pagePosts);
-        }
-
-        pages.flat().forEach(post => {
+        const posts = await fetchOudOmmenPosts(url);
+        posts.forEach(post => {
             const date = post.date?.slice(0, 10);
             if (!date) return;
             oudOmmenEventDates.add(date);
