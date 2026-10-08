@@ -1,162 +1,285 @@
-const dateDisplay = document.getElementById('dateDisplay');
-const dayResult = document.getElementById('dayResult');
-const copyBtn = document.getElementById('copyBtn');
-const calendarBtn = document.getElementById('calendarBtn');
-const datePicker = document.getElementById('datePicker');
-const historyContainer = document.getElementById('history');
+const dayInput = document.getElementById('dayInput');
+const monthInput = document.getElementById('monthInput');
+const yearInput = document.getElementById('yearInput');
+const weekInput = document.getElementById('weekInput');
+const weekYearInput = document.getElementById('weekYearInput');
+const descriptionInput = document.getElementById('descriptionInput');
 
-const daySelect = document.getElementById('daySelect');
-const monthSelect = document.getElementById('monthSelect');
-const yearSelect = document.getElementById('yearSelect');
+const calendar = document.getElementById('calendar');
+const calendarMonth = document.getElementById('calendarMonth');
+const calendarWeekInfo = document.getElementById('calendarWeekInfo');
+const prevMonth = document.getElementById('prevMonth');
+const nextMonth = document.getElementById('nextMonth');
 
-let history = JSON.parse(localStorage.getItem('dateHistory')) || [];
+const maanden = [
+    'januari','februari','maart','april','mei','juni',
+    'juli','augustus','september','oktober','november','december'
+];
 
-// Dagen en maanden
-const dagen = ["zondag", "maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag"];
-const maanden = ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
+let viewDate = new Date();
+let selectedDate = null;
+let selectedWeek = null;
 
-// Vul selectors
-function populateSelectors() {
-    daySelect.innerHTML = '';
-    for (let i = 1; i <= 31; i++) {
-        const opt = document.createElement('option');
-        opt.value = i;
-        opt.textContent = i;
-        daySelect.appendChild(opt);
+function pad(value) {
+    return String(value).padStart(2, '0');
+}
+
+function toDateKey(date) {
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function getISOWeek(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const day = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - day);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+function getISOWeekYear(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const day = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - day);
+    return d.getUTCFullYear();
+}
+
+function getDateFromISOWeek(week, year) {
+    const jan4 = new Date(year, 0, 4);
+    const day = jan4.getDay() || 7;
+    const monday = new Date(year, 0, 4);
+    monday.setDate(jan4.getDate() - day + 1 + (week - 1) * 7);
+    return monday;
+}
+
+function isoWeeksInYear(year) {
+    return getISOWeek(new Date(year, 11, 28));
+}
+
+function populateMonths() {
+    monthInput.innerHTML = '';
+    maanden.forEach((month, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = month;
+        monthInput.appendChild(option);
+    });
+}
+
+function setDateInputs(date) {
+    dayInput.value = date.getDate();
+    monthInput.value = date.getMonth();
+    yearInput.value = date.getFullYear();
+}
+
+function clearWeekInputs() {
+    weekInput.value = '';
+    weekYearInput.value = '';
+}
+
+function clearDateInputs() {
+    dayInput.value = '';
+    yearInput.value = '';
+}
+
+function validDateFromInputs() {
+    const day = Number(dayInput.value);
+    const month = Number(monthInput.value);
+    const year = Number(yearInput.value);
+
+    if (!dayInput.value || !yearInput.value || !Number.isInteger(day) ||
+        !Number.isInteger(year) || day < 1 || day > 31 || year < 1000 || year > 2100) {
+        return null;
     }
 
-    monthSelect.innerHTML = '';
-    maanden.forEach((maand, index) => {
-        const opt = document.createElement('option');
-        opt.value = index;
-        opt.textContent = maand;
-        monthSelect.appendChild(opt);
-    });
-
-    yearSelect.innerHTML = '';
-    for (let y = 2100; y >= 1000; y--) {
-        const opt = document.createElement('option');
-        opt.value = y;
-        opt.textContent = y;
-        yearSelect.appendChild(opt);
+    const date = new Date(year, month, day);
+    if (date.getFullYear() !== year || date.getMonth() !== month || date.getDate() !== day) {
+        return null;
     }
+    return date;
 }
 
-function getCurrentDate() {
-    const year = parseInt(yearSelect.value);
-    const month = parseInt(monthSelect.value);
-    let day = parseInt(daySelect.value);
-    const lastDay = new Date(year, month + 1, 0).getDate();
-    if (day > lastDay) day = lastDay;
-    return new Date(year, month, day);
+function validWeekFromInputs() {
+    const week = Number(weekInput.value);
+    const year = Number(weekYearInput.value);
+
+    if (!weekInput.value || !weekYearInput.value ||
+        !Number.isInteger(week) || !Number.isInteger(year) ||
+        week < 1 || week > isoWeeksInYear(year) || year < 1000 || year > 2100) {
+        return null;
+    }
+
+    return { week, year };
 }
 
-function updateDisplay() {
-    const date = getCurrentDate();
-    
-    const options = { day: 'numeric', month: 'long', year: 'numeric' };
-    dateDisplay.textContent = date.toLocaleDateString('nl-NL', options);
-    
-    const dayName = dagen[date.getDay()];
-    dayResult.textContent = dayName.charAt(0).toUpperCase() + dayName.slice(1);
-    
-    addToHistory(date);
-}
-
-function addToHistory(date) {
-    const dateStr = date.toISOString().split('T')[0];
-    history = history.filter(item => item.date !== dateStr);
-    
-    history.unshift({
-        date: dateStr,
-        display: date.toLocaleDateString('nl-NL', {day:'numeric', month:'long', year:'numeric'}),
-        day: dagen[date.getDay()]
-    });
-    
-    if (history.length > 10) history.pop();
-    localStorage.setItem('dateHistory', JSON.stringify(history));
-    renderHistory();
-}
-
-function renderHistory() {
-    historyContainer.innerHTML = '';
-    
-    if (history.length === 0) {
-        historyContainer.innerHTML = '<p style="opacity:0.6; font-style:italic;">Nog geen recente data</p>';
+function updateFromDate() {
+    const date = validDateFromInputs();
+    if (!date) {
+        selectedDate = null;
+        renderCalendar();
         return;
     }
 
-    history.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'history-item';
-        div.innerHTML = `
-            <span>${item.display}</span>
-            <strong>${item.day}</strong>
-        `;
-        div.onclick = () => {
-            const d = new Date(item.date);
-            daySelect.value = d.getDate();
-            monthSelect.value = d.getMonth();
-            yearSelect.value = d.getFullYear();
-            updateDisplay();
-        };
-        historyContainer.appendChild(div);
-    });
+    selectedDate = date;
+    selectedWeek = null;
+    clearWeekInputs();
+    viewDate = new Date(date.getFullYear(), date.getMonth(), 1);
+    renderCalendar();
 }
 
-// Kalender
-function openCalendar() {
-    if (datePicker.showPicker) {
-        try {
-            datePicker.showPicker();
-            return true;
-        } catch (error) {
-            // Sommige browsers staan showPicker alleen toe na een gebruikersactie.
+function updateFromWeek() {
+    const weekData = validWeekFromInputs();
+    if (!weekData) {
+        selectedWeek = null;
+        renderCalendar();
+        return;
+    }
+
+    selectedWeek = weekData;
+    selectedDate = null;
+    clearDateInputs();
+
+    const monday = getDateFromISOWeek(weekData.week, weekData.year);
+    viewDate = new Date(monday.getFullYear(), monday.getMonth(), 1);
+    renderCalendar();
+}
+
+function parseDescription(value) {
+    const text = value.trim().toLowerCase();
+    if (!text) return;
+
+    // Herken bijvoorbeeld 22-01-1967 of 22/01/1967.
+    let match = text.match(/^(\d{1,2})[\-\/.](\d{1,2})[\-\/.](\d{4})$/);
+    if (match) {
+        const date = new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+        if (date.getFullYear() === Number(match[3]) &&
+            date.getMonth() === Number(match[2]) - 1 &&
+            date.getDate() === Number(match[1])) {
+            setDateInputs(date);
+            updateFromDate();
+            return;
         }
     }
-    datePicker.click();
-    return true;
+
+    // Herken bijvoorbeeld "22 januari 1967".
+    const monthIndex = maanden.findIndex(month => text.includes(month));
+    match = text.match(/(\d{1,2}).*?(\d{4})/);
+    if (monthIndex >= 0 && match) {
+        const date = new Date(Number(match[2]), monthIndex, Number(match[1]));
+        if (date.getFullYear() === Number(match[2]) &&
+            date.getMonth() === monthIndex &&
+            date.getDate() === Number(match[1])) {
+            setDateInputs(date);
+            updateFromDate();
+        }
+    }
 }
 
-calendarBtn.addEventListener('click', openCalendar);
+function renderCalendar() {
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
 
-datePicker.addEventListener('change', () => {
-    if (datePicker.value) {
-        const selected = new Date(datePicker.value);
-        daySelect.value = selected.getDate();
-        monthSelect.value = selected.getMonth();
-        yearSelect.value = selected.getFullYear();
-        updateDisplay();
+    calendarMonth.textContent = `${maanden[month]} ${year}`;
+
+    if (selectedWeek) {
+        calendarWeekInfo.textContent = `week ${selectedWeek.week} · ${selectedWeek.year}`;
+    } else if (selectedDate) {
+        calendarWeekInfo.textContent = `week ${getISOWeek(selectedDate)} · ${getISOWeekYear(selectedDate)}`;
+    } else {
+        calendarWeekInfo.textContent = '';
     }
+
+    calendar.innerHTML = '';
+
+    const firstDay = new Date(year, month, 1);
+    const startOffset = (firstDay.getDay() + 6) % 7;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const previousDays = new Date(year, month, 0).getDate();
+
+    for (let i = 0; i < 42; i++) {
+        const dayNumber = i - startOffset + 1;
+        let cellDate;
+        let otherMonth = false;
+
+        if (dayNumber < 1) {
+            cellDate = new Date(year, month - 1, previousDays + dayNumber);
+            otherMonth = true;
+        } else if (dayNumber > daysInMonth) {
+            cellDate = new Date(year, month + 1, dayNumber - daysInMonth);
+            otherMonth = true;
+        } else {
+            cellDate = new Date(year, month, dayNumber);
+        }
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'calendar-day';
+        button.textContent = cellDate.getDate();
+
+        if (otherMonth) button.classList.add('other-month');
+
+        const today = new Date();
+        if (toDateKey(cellDate) === toDateKey(today)) {
+            button.classList.add('today');
+        }
+
+        let highlight = false;
+        let weekHighlight = false;
+
+        if (selectedDate) {
+            highlight = toDateKey(cellDate) === toDateKey(selectedDate);
+        }
+
+        if (selectedWeek) {
+            weekHighlight =
+                getISOWeek(cellDate) === selectedWeek.week &&
+                getISOWeekYear(cellDate) === selectedWeek.year;
+            highlight = weekHighlight;
+        }
+
+        if (highlight) {
+            button.classList.add('highlight');
+            if (weekHighlight) button.classList.add('week-highlight');
+        }
+
+        button.addEventListener('click', () => {
+            setDateInputs(cellDate);
+            clearWeekInputs();
+            selectedDate = new Date(cellDate);
+            selectedWeek = null;
+            viewDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), 1);
+            renderCalendar();
+        });
+
+        calendar.appendChild(button);
+    }
+}
+
+dayInput.addEventListener('input', updateFromDate);
+monthInput.addEventListener('change', updateFromDate);
+yearInput.addEventListener('input', updateFromDate);
+
+weekInput.addEventListener('input', updateFromWeek);
+weekYearInput.addEventListener('input', updateFromWeek);
+
+descriptionInput.addEventListener('change', () => {
+    parseDescription(descriptionInput.value);
 });
 
-copyBtn.addEventListener('click', () => {
-    const text = `${dateDisplay.textContent} was een ${dayResult.textContent.toLowerCase()}`;
-    navigator.clipboard.writeText(text).then(() => {
-        const original = copyBtn.textContent;
-        copyBtn.textContent = '✅ Gekopieerd!';
-        setTimeout(() => copyBtn.textContent = original, 2000);
-    });
+prevMonth.addEventListener('click', () => {
+    viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1);
+    renderCalendar();
 });
 
-// Event listeners
-daySelect.addEventListener('change', updateDisplay);
-monthSelect.addEventListener('change', updateDisplay);
-yearSelect.addEventListener('change', updateDisplay);
+nextMonth.addEventListener('click', () => {
+    viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1);
+    renderCalendar();
+});
 
-// Start app
-populateSelectors();
+populateMonths();
+
 const today = new Date();
-daySelect.value = today.getDate();
-monthSelect.value = today.getMonth();
-yearSelect.value = today.getFullYear();
+setDateInputs(today);
+selectedDate = new Date(today);
+viewDate = new Date(today.getFullYear(), today.getMonth(), 1);
 
-updateDisplay();
-renderHistory();
-
-// Probeer de kalender direct te openen zodra de app is geladen.
-// Browsers die dit blokkeren wegens het ontbreken van een gebruikersactie
-// laten de bestaande knop beschikbaar.
-setTimeout(() => {
-    openCalendar();
-}, 250);
+renderCalendar();
