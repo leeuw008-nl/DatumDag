@@ -55,6 +55,67 @@ function isoWeeksInYear(year) {
     return getISOWeek(new Date(year, 11, 28));
 }
 
+function easterSunday(year) {
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const month = Math.floor((h + l - 7 * m + 114) / 31);
+    const day = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(year, month - 1, day);
+}
+
+function addDays(date, days) {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+}
+
+function getDutchHolidays(year) {
+    const holidays = new Map();
+
+    const add = (date, name) => holidays.set(toDateKey(date), name);
+
+    add(new Date(year, 0, 1), 'Nieuwjaarsdag');
+
+    const easter = easterSunday(year);
+    add(addDays(easter, -2), 'Goede Vrijdag');
+    add(easter, 'Eerste Paasdag');
+    add(addDays(easter, 1), 'Tweede Paasdag');
+    add(addDays(easter, 39), 'Hemelvaartsdag');
+    add(addDays(easter, 49), 'Eerste Pinksterdag');
+    add(addDays(easter, 50), 'Tweede Pinksterdag');
+
+    // Koninginnedag t/m 2013, Koningsdag vanaf 2014.
+    if (year >= 1891 && year <= 2013) {
+        add(new Date(year, 3, 30), 'Koninginnedag');
+    } else if (year >= 2014) {
+        const kingsDay = new Date(year, 3, 27);
+        if (kingsDay.getDay() === 0) kingsDay.setDate(26);
+        add(kingsDay, 'Koningsdag');
+    }
+
+    // Bevrijdingsdag is sinds 2021 jaarlijks een officiële vrije dag.
+    // Voor oudere jaren markeren we de bekende vijfjaarlijkse viering.
+    if (year >= 2021 || (year >= 1990 && year % 5 === 0)) {
+        add(new Date(year, 4, 5), 'Bevrijdingsdag');
+    }
+
+    add(new Date(year, 11, 25), 'Eerste Kerstdag');
+    add(new Date(year, 11, 26), 'Tweede Kerstdag');
+
+    return holidays;
+}
+
+
 function populateMonths() {
     monthInput.innerHTML = '';
     maanden.forEach((month, index) => {
@@ -234,6 +295,12 @@ function renderCalendar() {
                 getISOWeek(cellDate) === selectedWeek.week &&
                 getISOWeekYear(cellDate) === selectedWeek.year;
             highlight = weekHighlight;
+        }
+
+        const holidayName = getDutchHolidays(cellDate.getFullYear()).get(toDateKey(cellDate));
+        if (holidayName) {
+            button.classList.add('holiday');
+            button.title = holidayName;
         }
 
         if (highlight) {
