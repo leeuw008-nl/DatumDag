@@ -55,7 +55,7 @@ h1 {
 
 #searchDescription {
     height: 40px;
-    padding: 0 12px;
+    padding: 0 13px;
     border: 0;
     border-radius: 10px;
     background: rgba(255,255,255,0.96);
@@ -63,10 +63,23 @@ h1 {
     font: inherit;
     font-weight: 700;
     cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+    transition: transform 0.1s, box-shadow 0.1s, background 0.1s;
+}
+
+#searchDescription:hover {
+    background: white;
+    box-shadow: 0 3px 9px rgba(0,0,0,0.24);
+}
+
+#searchDescription:focus-visible {
+    outline: 3px solid rgba(255,255,255,0.65);
+    outline-offset: 2px;
 }
 
 #searchDescription:active {
     transform: translateY(1px);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.16);
 }
 
 .description-message {
