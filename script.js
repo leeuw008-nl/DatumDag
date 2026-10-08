@@ -333,7 +333,9 @@ async function loadHistoricalEventMarkers(year, month) {
     const nextMonth = new Date(year, month + 1, 1);
     const endDate = `${nextMonth.getFullYear()}-${pad(nextMonth.getMonth() + 1)}-01T00:00:00Z`;
 
-    const query = 'SELECT DISTINCT ?item ?itemLabel ?description ?date WHERE { ?item wdt:P585 ?date. FILTER(?date >= "' + startDate + '"^^xsd:dateTime && ?date < "' + endDate + '"^^xsd:dateTime) FILTER(EXISTS { ?item wdt:P17 wd:Q55. } || EXISTS { ?item wdt:P276/wdt:P17 wd:Q55. }) OPTIONAL { ?item schema:description ?description. FILTER(LANG(?description) = "nl") } SERVICE wikibase:label { bd:serviceParam wikibase:language "nl,en". } } ORDER BY ?date LIMIT 1000';
+    // Alleen de datums ophalen. Details worden pas opgehaald wanneer
+    // de gebruiker een gemarkeerde kalenderdatum aanklikt.
+    const query = 'SELECT DISTINCT ?date WHERE { ?item wdt:P585 ?date. FILTER(?date >= "' + startDate + '"^^xsd:dateTime && ?date < "' + endDate + '"^^xsd:dateTime) FILTER(EXISTS { ?item wdt:P17 wd:Q55. } || EXISTS { ?item wdt:P276/wdt:P17 wd:Q55. }) } LIMIT 1000';
 
     try {
         const response = await fetch('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(query), {
@@ -346,15 +348,7 @@ async function loadHistoricalEventMarkers(year, month) {
 
         rows.forEach(row => {
             const value = row.date?.value;
-            if (!value) return;
-            const key = value.slice(0, 10);
-            historicalEventDates.add(key);
-            if (!historicalEventDetails.has(key)) historicalEventDetails.set(key, []);
-            historicalEventDetails.get(key).push({
-                item: row.item?.value || '',
-                label: row.itemLabel?.value || 'Gebeurtenis',
-                description: row.description?.value || ''
-            });
+            if (value) historicalEventDates.add(value.slice(0, 10));
         });
 
         if (historicalEventsMonthKey === monthKey) {
