@@ -33,6 +33,7 @@ let wikidataEventDates = new Set();
 let oudOmmenEventDates = new Set();
 let oudOmmenEventDetails = new Map();
 let sourceLoadingCount = 0;
+let oudOmmenFeedPromise = null;
 
 function pad(value) {
     return String(value).padStart(2, '0');
@@ -388,25 +389,31 @@ async function loadWikidataEventMarkers(startDate, endDate, monthKey) {
 }
 
 async function loadOudOmmenFeed() {
-    try {
-        const response = await fetch('./oudommen-events.json?v=' + Date.now(), { cache: 'no-store' });
-        if (!response.ok) throw new Error('OudOmmen feed niet beschikbaar');
-        const posts = await response.json();
-        if (!Array.isArray(posts)) return;
+    if (oudOmmenFeedPromise) return oudOmmenFeedPromise;
 
-        posts.forEach(post => {
-            const date = (post.date || '').slice(0, 10);
-            if (!date) return;
-            oudOmmenEventDates.add(date);
-            if (!oudOmmenEventDetails.has(date)) oudOmmenEventDetails.set(date, []);
-            oudOmmenEventDetails.get(date).push({
-                item: post.link || '',
-                label: post.title || 'OudOmmen.nl'
+    oudOmmenFeedPromise = (async () => {
+        try {
+            const response = await fetch('./oudommen-events.json?v=20261008', { cache: 'no-store' });
+            if (!response.ok) throw new Error('OudOmmen feed niet beschikbaar');
+            const posts = await response.json();
+            if (!Array.isArray(posts)) return;
+
+            posts.forEach(post => {
+                const date = (post.date || '').slice(0, 10);
+                if (!date) return;
+                oudOmmenEventDates.add(date);
+                if (!oudOmmenEventDetails.has(date)) oudOmmenEventDetails.set(date, []);
+                oudOmmenEventDetails.get(date).push({
+                    item: post.link || '',
+                    label: post.title || 'OudOmmen.nl'
+                });
             });
-        });
-    } catch (error) {
-        // De kalender blijft bruikbaar als de lokale OudOmmen-feed tijdelijk niet beschikbaar is.
-    }
+        } catch (error) {
+            // De kalender blijft bruikbaar als de lokale OudOmmen-feed tijdelijk niet beschikbaar is.
+        }
+    })();
+
+    return oudOmmenFeedPromise;
 }
 
 async function loadOudOmmenEventMarkers(startDate, endDate, monthKey) {
