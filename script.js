@@ -95,8 +95,11 @@ function getDutchHolidays(year) {
     add(addDays(easter, 49), 'Eerste Pinksterdag');
     add(addDays(easter, 50), 'Tweede Pinksterdag');
 
-    // Koninginnedag t/m 2013, Koningsdag vanaf 2014.
-    if (year >= 1891 && year <= 2013) {
+    // Historische Koninginnedag: 31 augustus onder Wilhelmina (1891–1948),
+    // 30 april onder Juliana en Beatrix (1949–2013).
+    if (year >= 1891 && year <= 1948) {
+        add(new Date(year, 7, 31), 'Koninginnedag');
+    } else if (year >= 1949 && year <= 2013) {
         add(new Date(year, 3, 30), 'Koninginnedag');
     } else if (year >= 2014) {
         const kingsDay = new Date(year, 3, 27);
@@ -189,6 +192,7 @@ function updateFromDate() {
 }
 
 function updateFromWeek() {
+    clearDateInputs();
     const weekData = validWeekFromInputs();
     if (!weekData) {
         selectedWeek = null;
@@ -362,6 +366,11 @@ yearInput.addEventListener('input', updateFromDate);
 
 weekInput.addEventListener('input', updateFromWeek);
 weekYearInput.addEventListener('input', updateFromWeek);
+
+descriptionInput.addEventListener('input', () => {
+    clearDateInputs();
+    clearWeekInputs();
+});
 
 descriptionInput.addEventListener('change', () => {
     parseDescription(descriptionInput.value);
