@@ -4,6 +4,8 @@ const yearInput = document.getElementById('yearInput');
 const weekInput = document.getElementById('weekInput');
 const weekYearInput = document.getElementById('weekYearInput');
 const descriptionInput = document.getElementById('descriptionInput');
+const searchDescription = document.getElementById('searchDescription');
+const descriptionMessage = document.getElementById('descriptionMessage');
 
 const calendar = document.getElementById('calendar');
 const calendarMonth = document.getElementById('calendarMonth');
@@ -227,11 +229,9 @@ function updateFromWeek() {
 
 function parseDescription(value) {
     const text = value.trim().toLowerCase();
-    if (!text) return;
+    if (!text) return false;
 
-    // Herken feestdagen in vrije omschrijvingen, ongeacht de volgorde
-    // van maand, jaar en feestdag.
-    const yearMatch = text.match(/(?:^|\\D)(\\d{4})(?:$|\\D)/);
+    const yearMatch = text.match(/(?:^|\D)(\d{4})(?:$|\D)/);
     const year = yearMatch ? Number(yearMatch[1]) : null;
 
     if (year >= 1000 && year <= 2100) {
@@ -240,7 +240,7 @@ function parseDescription(value) {
             .replace(/1e/g, 'eerste')
             .replace(/2e/g, 'tweede')
             .replace(/3e/g, 'derde')
-            .replace(/\\s+/g, ' ')
+            .replace(/\s+/g, ' ')
             .trim();
 
         const holidayAliases = [
@@ -266,15 +266,15 @@ function parseDescription(value) {
                         const date = new Date(parts[0], parts[1] - 1, parts[2]);
                         setDateInputs(date);
                         updateFromDate();
-                        return;
+                        return true;
                     }
                 }
+                return false;
             }
         }
     }
 
-    // Herken bijvoorbeeld 22-01-1967 of 22/01/1967.
-    let match = text.match(/^(\d{1,2})[\-\/.](\d{1,2})[\-\/.](\d{4})$/);
+    let match = text.match(/^(\d{1,2})[\-\/\.](\d{1,2})[\-\/\.](\d{4})$/);
     if (match) {
         const date = new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
         if (date.getFullYear() === Number(match[3]) &&
@@ -282,11 +282,11 @@ function parseDescription(value) {
             date.getDate() === Number(match[1])) {
             setDateInputs(date);
             updateFromDate();
-            return;
+            return true;
         }
+        return false;
     }
 
-    // Herken bijvoorbeeld "22 januari 1967".
     const monthIndex = maanden.findIndex(month => text.includes(month));
     match = text.match(/(\d{1,2}).*?(\d{4})/);
     if (monthIndex >= 0 && match) {
@@ -296,10 +296,18 @@ function parseDescription(value) {
             date.getDate() === Number(match[1])) {
             setDateInputs(date);
             updateFromDate();
+            return true;
         }
+        return false;
     }
+
+    return false;
 }
 
+function showDescriptionMessage(message, type = '') {
+    descriptionMessage.textContent = message;
+    descriptionMessage.className = 'description-message' + (type ? ' ' + type : '');
+}
 function renderHolidayList(year, month) {
     const holidays = getDutchHolidays(year);
     const monthHolidays = [];
@@ -436,8 +444,21 @@ weekYearInput.addEventListener('input', updateFromWeek);
 
 descriptionInput.addEventListener('focus', () => clearOtherRows('description'));
 
-descriptionInput.addEventListener('change', () => {
-    parseDescription(descriptionInput.value);
+searchDescription.addEventListener('click', () => {
+    const value = descriptionInput.value.trim();
+
+    if (!value) {
+        showDescriptionMessage('Invoer voldoet niet aan de voorwaarden.', 'error');
+        return;
+    }
+
+    if (parseDescription(value)) {
+        showDescriptionMessage('Gevonden.', 'success');
+    } else if (/\d{4}/.test(value) || /\d{1,2}[\-\/\.]\d{1,2}[\-\/\.]\d{4}/.test(value)) {
+        showDescriptionMessage('Niets gevonden.', 'error');
+    } else {
+        showDescriptionMessage('Invoer voldoet niet aan de voorwaarden.', 'error');
+    }
 });
 
 prevMonth.addEventListener('click', () => {
