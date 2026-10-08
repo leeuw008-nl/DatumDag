@@ -539,3 +539,15 @@ selectedDate = new Date(today);
 viewDate = new Date(today.getFullYear(), today.getMonth(), 1);
 
 renderCalendar();
+
+const infoButton = document.getElementById('infoButton');
+const infoPanel = document.getElementById('infoPanel');
+const infoClose = document.getElementById('infoClose');
+
+infoButton.addEventListener('click', () => {
+    infoPanel.hidden = !infoPanel.hidden;
+});
+
+infoClose.addEventListener('click', () => {
+    infoPanel.hidden = true;
+});
