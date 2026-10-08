@@ -355,6 +355,13 @@ function showDescriptionMessage(message, type = '') {
     descriptionMessage.textContent = message;
     descriptionMessage.className = 'description-message' + (type ? ' ' + type : '');
 }
+
+function clearCalendarSelection() {
+    selectedDate = null;
+    selectedDates = [];
+    selectedWeek = null;
+    renderCalendar();
+}
 function renderHolidayList(year, month) {
     const holidays = getDutchHolidays(year);
     const monthHolidays = [];
@@ -507,6 +514,7 @@ searchDescription.addEventListener('click', () => {
     if (parseDescription(value)) {
         showDescriptionMessage('Gevonden', 'success');
     } else if (/\d{4}/.test(value) || /\d{1,2}[\-\/\.]\d{1,2}[\-\/\.]\d{4}/.test(value)) {
+        clearCalendarSelection();
         showDescriptionMessage('Niets gevonden', 'error');
     } else {
         showDescriptionMessage('Invoer voldoet niet aan de voorwaarden.', 'error');
