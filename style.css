@@ -409,3 +409,6 @@ body.info-open main {
 
 
 .event-sources{margin-top:7px;padding-top:7px;border-top:1px solid rgba(0,0,0,.12);display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.78rem}.event-sources strong{font-size:.82rem}.event-sources label{display:inline-flex;align-items:center;gap:4px;cursor:pointer}.event-sources input{margin:0}
+
+
+.calendar-day.historical-event .historical-event-markers{position:absolute;left:50%;bottom:1px;transform:translateX(-50%);display:flex;gap:2px;line-height:1;pointer-events:none}.calendar-day.historical-event .historical-event-letter{font-size:7px;font-weight:800;min-width:7px;text-align:center}.calendar-day.historical-event .historical-event-letter.wikidata{color:#4f46a5}.calendar-day.historical-event .historical-event-letter.oudommen{color:#2f7d32}.calendar-day.highlight.historical-event .historical-event-letter{color:white}
