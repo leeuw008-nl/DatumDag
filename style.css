@@ -209,6 +209,12 @@ input:focus, select:focus {
     border-radius: 16px;
     padding: 9px;
     box-shadow: 0 8px 25px rgba(0,0,0,0.18);
+    border: 1px solid #d94a4a;
+    transition: border-color 0.2s ease, border-width 0.2s ease;
+}
+
+.calendar-section.events-loaded {
+    border: 2px solid #2f9e44;
 }
 
 .calendar-header {
