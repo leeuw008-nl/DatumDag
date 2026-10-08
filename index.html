@@ -5,41 +5,102 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dag van de Week</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20261008s1">
     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/365/365571.png">
 </head>
 <body>
     <div class="container">
-        <h1>📅 Dag van de Week</h1>
-        
-        <div class="selectors">
-            <div>
-                <label>Dag</label>
-                <select id="daySelect"></select>
+        <header>
+            <h1>Dag van de Week</h1>
+            <button type="button" id="infoButton" aria-label="Handleiding">i</button>
+        </header>
+
+        <section id="infoPanel" class="info-panel" hidden>
+            <div class="info-header">
+                <h2>Handleiding</h2>
+                <button type="button" id="infoClose" aria-label="Handleiding sluiten">×</button>
             </div>
-            <div>
-                <label>Maand</label>
-                <select id="monthSelect"></select>
+            <div class="info-content">
+                <p><strong>Dag van de Week</strong> helpt je om snel een datum, weeknummer of historische feestdag te vinden.</p>
+
+                <h3>1. Een datum opzoeken</h3>
+                <p>Vul bij <strong>Datum</strong> de dag, maand en het jaar in. De kalender springt automatisch naar de juiste maand en markeert de gekozen datum.</p>
+                <p><strong>Voorbeeld:</strong> 22 januari 1967 → de kalender markeert 22 januari en toont <strong>week 3</strong>.</p>
+
+                <h3>2. Een week opzoeken</h3>
+                <p>Vul bij <strong>Week</strong> het weeknummer en het jaar in. De hele betreffende week wordt in de kalender gemarkeerd.</p>
+                <p><strong>Voorbeeld:</strong> week 3, 1967 → de week van maandag 16 t/m zondag 22 januari 1967.</p>
+
+                <h3>3. Zoeken via Omschr.</h3>
+                <p>Bij <strong>Omschr.</strong> kun je een datum of feestdag als tekst invoeren en daarna op <strong>Zoek</strong> drukken.</p>
+                <p>Bijvoorbeeld:</p>
+                <ul>
+                    <li><strong>22 januari 1967</strong></li>
+                    <li><strong>22-01-1967</strong></li>
+                    <li><strong>Koninginnedag 1955</strong></li>
+                    <li><strong>2e paasdag 1999</strong></li>
+                    <li><strong>eerste kerstdag 1955</strong></li>
+                </ul>
+
+                <h3>4. Feestdagen</h3>
+                <p>Feestdagen worden in de kalender gemarkeerd met een sterretje. Onder de kalender staat een overzicht van de feestdagen in de weergegeven maand.</p>
+                <p>Ook historische <strong>Koninginnedagen</strong> en <strong>Koningsdagen</strong> worden herkend. De datum is afhankelijk van het betreffende jaar.</p>
+
+                <h3>5. Feestdagen in groepen</h3>
+                <p>Met een zoekopdracht als <strong>Pasen 2025</strong>, <strong>Pinksteren 2025</strong> of <strong>Kerst 2025</strong> worden beide dagen van het feest gemarkeerd.</p>
+
+                <h3>6. Wisselen tussen invoervelden</h3>
+                <p>Als je in een andere invoerrij klikt, worden de gegevens uit de andere rijen gewist. Zo blijft altijd duidelijk welke zoekmethode actief is.</p>
+
+                <h3>7. Kalender</h3>
+                <p>Gebruik de pijlen naast de maandnaam om door maanden te bladeren. Klik op een dag in de kalender om die datum direct te selecteren.</p>
             </div>
-            <div>
-                <label>Jaar</label>
-                <select id="yearSelect"></select>
-            </div>
-        </div>
+        </section>
 
-        <button class="btn secondary" id="calendarBtn">📆 Kalender openen</button>
+        <main>
+            <section class="input-section">
+                <div class="input-row date-row">
+                    <label>Datum</label>
+                    <input type="number" id="dayInput" min="1" max="31" placeholder="Dag">
+                    <select id="monthInput" aria-label="Maand"></select>
+                    <input type="number" id="yearInput" min="1000" max="2100" placeholder="Jaar">
+                </div>
 
-        <div class="date-display" id="dateDisplay">15 juli 2026</div>
-        <div class="day-result" id="dayResult">Donderdag</div>
+                <div class="input-row week-row">
+                    <label>Week</label>
+                    <input type="number" id="weekInput" min="1" max="53" placeholder="Weeknummer">
+                    <input type="number" id="weekYearInput" min="1000" max="2100" placeholder="Jaar">
+                </div>
 
-        <button class="btn primary" id="copyBtn">📋 Kopieer dag</button>
+                <div class="input-row description-row">
+                    <label for="descriptionInput">Omschr.</label>
+                    <input type="text" id="descriptionInput"
+                           placeholder="bijv. 22 januari 1967 of Koninginnedag 1955">
+                    <button type="button" id="searchDescription">Zoek</button>
+                </div>
+                <div id="descriptionMessage" class="description-message" role="status" aria-live="polite"></div>
+            </section>
 
-        <h2>Recente data</h2>
-        <div id="history" class="history"></div>
+            <section class="calendar-section">
+                <div class="calendar-header">
+                    <button id="prevMonth" aria-label="Vorige maand">‹</button>
+                    <div>
+                        <strong id="calendarMonth"></strong>
+                        <span id="calendarWeekInfo"></span>
+                    </div>
+                    <button id="nextMonth" aria-label="Volgende maand">›</button>
+                </div>
+
+                <div class="weekday-header">
+                    <span>ma</span><span>di</span><span>wo</span>
+                    <span>do</span><span>vr</span><span>za</span><span>zo</span>
+                </div>
+                <div id="calendar" class="calendar"></div>
+                <div id="holidayList" class="holiday-list"></div>
+            </section>
+        </main>
     </div>
 
-    <input type="date" id="datePicker" style="display:none;">
-
-    <script src="script.js"></script>
+    <script src="script.js?v=20261008s1"></script>
 </body>
 </html>
