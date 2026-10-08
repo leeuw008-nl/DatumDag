@@ -1,6 +1,9 @@
 name: Update OudOmmen articles
 
 on:
+  push:
+    paths:
+      - 'scripts/update-oudommen.py'
   workflow_dispatch:
   schedule:
     - cron: '17 5 * * *'
