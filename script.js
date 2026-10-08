@@ -402,7 +402,7 @@ async function loadHistoricalEvents(date) {
     historicalEvents.innerHTML = '<div class="events-status">Historische gebeurtenissen laden…</div>';
 
     const dateString = date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 'T00:00:00Z';
-    const query = 'SELECT DISTINCT ?item ?itemLabel ?description WHERE { ?item wdt:P585 "' + dateString + '"^^xsd:dateTime. OPTIONAL { ?item schema:description ?description. FILTER(LANG(?description) = "nl") } SERVICE wikibase:label { bd:serviceParam wikibase:language "nl,en". } } LIMIT 12';
+    const query = 'SELECT DISTINCT ?item ?itemLabel ?description WHERE { ?item wdt:P585 "' + dateString + '"^^xsd:dateTime. { ?item wdt:P17 wd:Q55. } UNION { ?item wdt:P276/wdt:P17 wd:Q55. } UNION { ?item wdt:P19/wdt:P17 wd:Q55. } OPTIONAL { ?item schema:description ?description. FILTER(LANG(?description) = "nl") } SERVICE wikibase:label { bd:serviceParam wikibase:language "nl,en". } } LIMIT 12';
 
     try {
         const response = await fetch('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(query), { headers: { 'Accept': 'application/sparql-results+json' } });
