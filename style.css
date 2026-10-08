@@ -126,7 +126,8 @@ h1 {
     grid-template-columns: 88px 1.4fr 1fr;
 }
 
-.description-row {
+.description-row,
+.event-search-row {
     grid-template-columns: 88px 1fr auto;
 }
 
@@ -353,7 +354,8 @@ input:focus, select:focus {
         grid-template-columns: 78px 1.4fr 1fr;
     }
 
-     .description-row {
+     .description-row,
+    .event-search-row {
         grid-template-columns: 78px 1fr auto;
     }
 
