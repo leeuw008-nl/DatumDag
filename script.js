@@ -229,6 +229,50 @@ function parseDescription(value) {
     const text = value.trim().toLowerCase();
     if (!text) return;
 
+    // Herken feestdagen in vrije omschrijvingen, ongeacht de volgorde
+    // van maand, jaar en feestdag.
+    const yearMatch = text.match(/(?:^|\\D)(\\d{4})(?:$|\\D)/);
+    const year = yearMatch ? Number(yearMatch[1]) : null;
+
+    if (year >= 1000 && year <= 2100) {
+        const holidays = getDutchHolidays(year);
+        const normalized = text
+            .replace(/1e/g, 'eerste')
+            .replace(/2e/g, 'tweede')
+            .replace(/3e/g, 'derde')
+            .replace(/\\s+/g, ' ')
+            .trim();
+
+        const holidayAliases = [
+            ['koninginnedag', 'Koninginnedag'],
+            ['koningsdag', 'Koningsdag'],
+            ['nieuwjaarsdag', 'Nieuwjaarsdag'],
+            ['goede vrijdag', 'Goede Vrijdag'],
+            ['eerste paasdag', 'Eerste Paasdag'],
+            ['tweede paasdag', 'Tweede Paasdag'],
+            ['eerste pinksterdag', 'Eerste Pinksterdag'],
+            ['tweede pinksterdag', 'Tweede Pinksterdag'],
+            ['hemelvaartsdag', 'Hemelvaartsdag'],
+            ['bevrijdingsdag', 'Bevrijdingsdag'],
+            ['eerste kerstdag', 'Eerste Kerstdag'],
+            ['tweede kerstdag', 'Tweede Kerstdag']
+        ];
+
+        for (const [alias, holidayName] of holidayAliases) {
+            if (normalized.includes(alias)) {
+                for (const [key, name] of holidays) {
+                    if (name === holidayName) {
+                        const parts = key.split('-').map(Number);
+                        const date = new Date(parts[0], parts[1] - 1, parts[2]);
+                        setDateInputs(date);
+                        updateFromDate();
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
     // Herken bijvoorbeeld 22-01-1967 of 22/01/1967.
     let match = text.match(/^(\d{1,2})[\-\/.](\d{1,2})[\-\/.](\d{4})$/);
     if (match) {
