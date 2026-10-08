@@ -387,40 +387,30 @@ async function loadWikidataEventMarkers(startDate, endDate, monthKey) {
     }
 }
 
-async function fetchOudOmmenPosts(url) {
+async function loadOudOmmenFeed() {
     try {
-        const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
-        if (response.ok) return await response.json();
-    } catch (error) {}
-    try {
-        const proxyUrl = 'https://r.jina.ai/' + url;
-        const response = await fetch(proxyUrl, { headers: { 'Accept': 'application/json' } });
-        if (!response.ok) throw new Error('OudOmmen proxy request failed');
-        return JSON.parse(await response.text());
-    } catch (error) {
-        return [];
-    }
-}
+        const response = await fetch('./oudommen-events.json?v=' + Date.now(), { cache: 'no-store' });
+        if (!response.ok) throw new Error('OudOmmen feed niet beschikbaar');
+        const posts = await response.json();
+        if (!Array.isArray(posts)) return;
 
-async function loadOudOmmenEventMarkers(startDate, endDate, monthKey) {
-    const apiStart = startDate.slice(0, 10) + 'T00:00:00';
-    const apiEnd = endDate.slice(0, 10) + 'T23:59:59';
-    const url = 'https://weblog.oudommen.nl/wp-json/wp/v2/posts?after=' + encodeURIComponent(apiStart) + '&before=' + encodeURIComponent(apiEnd) + '&per_page=100&orderby=date&order=asc&status=publish&_fields=date,date_gmt,link,title';
-    try {
-        const posts = await fetchOudOmmenPosts(url);
         posts.forEach(post => {
-            const date = post.date?.slice(0, 10);
+            const date = (post.date || '').slice(0, 10);
             if (!date) return;
             oudOmmenEventDates.add(date);
             if (!oudOmmenEventDetails.has(date)) oudOmmenEventDetails.set(date, []);
             oudOmmenEventDetails.get(date).push({
                 item: post.link || '',
-                label: post.title?.rendered || 'OudOmmen.nl'
+                label: post.title || 'OudOmmen.nl'
             });
         });
     } catch (error) {
-        // De kalender blijft bruikbaar als OudOmmen tijdelijk niet bereikbaar is.
+        // De kalender blijft bruikbaar als de lokale OudOmmen-feed tijdelijk niet beschikbaar is.
     }
+}
+
+async function loadOudOmmenEventMarkers(startDate, endDate, monthKey) {
+    await loadOudOmmenFeed();
 }
 
 function showDescriptionMessage(message, type = '') {
@@ -505,35 +495,6 @@ async function loadHistoricalEvents(date) {
         }
     }
 
-    // Als OudOmmen voor deze datum nog niet in de maandcache zit,
-    // haal de publicaties van die dag rechtstreeks op.
-    if (sourceOudOmmen.checked && !oudOmmenEventDetails.has(key)) {
-        const nextDay = addDays(date, 1);
-        const apiStart = key + 'T00:00:00';
-        const apiEnd = toDateKey(nextDay) + 'T00:00:00';
-        const url = 'https://weblog.oudommen.nl/wp-json/wp/v2/posts?after=' +
-            encodeURIComponent(apiStart) +
-            '&before=' + encodeURIComponent(apiEnd) +
-            '&per_page=100&orderby=date&order=asc&status=publish&_fields=date,date_gmt,link,title';
-
-        try {
-            const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
-            if (response.ok) {
-                const posts = await response.json();
-                const mapped = posts
-                    .filter(post => (post.date || '').slice(0, 10) === key)
-                    .map(post => ({
-                        item: post.link || '',
-                        label: post.title?.rendered || 'OudOmmen.nl',
-                        description: ''
-                    }));
-                oudOmmenEventDetails.set(key, mapped);
-                rows.push(...mapped.map(row => ({ ...row, source: 'OudOmmen.nl' })));
-            }
-        } catch (error) {
-            // De kalender blijft bruikbaar als OudOmmen tijdelijk niet bereikbaar is.
-        }
-    }
 
     renderHistoricalEventDetails(rows);
 }
