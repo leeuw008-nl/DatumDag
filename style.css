@@ -42,11 +42,11 @@ h1 {
 }
 
 .date-row {
-    grid-template-columns: 62px 1fr 1.8fr 1.1fr;
+    grid-template-columns: 88px 1fr 1.8fr 1.1fr;
 }
 
 .week-row {
-    grid-template-columns: 62px 1.4fr 1fr;
+    grid-template-columns: 88px 1.4fr 1fr;
 }
 
 .description-row {
@@ -179,7 +179,11 @@ input:focus, select:focus {
     }
 
     .date-row {
-        grid-template-columns: 52px 1fr 1.55fr 1fr;
+        grid-template-columns: 78px 1fr 1.55fr 1fr;
+    }
+
+    .week-row {
+        grid-template-columns: 78px 1.4fr 1fr;
     }
 
     .description-row {
