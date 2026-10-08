@@ -6,10 +6,6 @@ const weekYearInput = document.getElementById('weekYearInput');
 const descriptionInput = document.getElementById('descriptionInput');
 const searchDescription = document.getElementById('searchDescription');
 const descriptionMessage = document.getElementById('descriptionMessage');
-const eventSearchInput = document.getElementById('eventSearchInput');
-const eventSearchButton = document.getElementById('eventSearchButton');
-const eventSearchMessage = document.getElementById('eventSearchMessage');
-
 const calendar = document.getElementById('calendar');
 const calendarMonth = document.getElementById('calendarMonth');
 const calendarWeekInfo = document.getElementById('calendarWeekInfo');
@@ -171,10 +167,6 @@ function clearOtherRows(activeRow) {
     if (activeRow !== 'description') {
         descriptionInput.value = '';
     }
-    if (activeRow !== 'event') {
-        eventSearchInput.value = '';
-    }
-
     selectedDate = null;
     selectedDates = [];
     selectedWeek = null;
@@ -444,64 +436,6 @@ function renderHolidayList(year, month) {
     });
 }
 
-async function searchHistoricalEvents(term) {
-    const search = term.trim();
-    if (!search) {
-        eventSearchMessage.textContent = 'Invoer voldoet niet aan de voorwaarden';
-        eventSearchMessage.className = 'description-message error';
-        return;
-    }
-
-    eventSearchMessage.textContent = 'Zoeken…';
-    eventSearchMessage.className = 'description-message';
-
-    const escaped = search.replace(/"/g, '\\"');
-    const query = 'SELECT DISTINCT ?item ?itemLabel ?date WHERE { ?item wdt:P585 ?date. FILTER(EXISTS { ?item wdt:P17 wd:Q55. } || EXISTS { ?item wdt:P276/wdt:P17 wd:Q55. }) SERVICE wikibase:label { bd:serviceParam wikibase:language "nl,en". } FILTER(CONTAINS(LCASE(STR(?itemLabel)), LCASE("' + escaped + '"))) } ORDER BY ?date LIMIT 30';
-
-    try {
-        const response = await fetch('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(query), {
-            headers: { 'Accept': 'application/sparql-results+json' }
-        });
-        if (!response.ok) throw new Error('Wikidata request failed');
-
-        const data = await response.json();
-        const rows = data.results.bindings || [];
-        historicalEvents.hidden = false;
-        historicalEvents.innerHTML = '<h3>Gevonden gebeurtenissen</h3>';
-
-        if (!rows.length) {
-            historicalEvents.innerHTML += '<div class="events-status">Geen gebeurtenissen gevonden</div>';
-            eventSearchMessage.textContent = 'Niets gevonden';
-            eventSearchMessage.className = 'description-message error';
-            return;
-        }
-
-        const list = document.createElement('ul');
-        rows.forEach(row => {
-            const li = document.createElement('li');
-            const link = document.createElement('a');
-            link.href = row.item.value;
-            link.target = '_blank';
-            link.rel = 'noopener';
-            link.textContent = row.itemLabel?.value || 'Gebeurtenis';
-            li.appendChild(link);
-            if (row.date?.value) {
-                const date = row.date.value.slice(0, 10).split('-').reverse().join('-');
-                li.appendChild(document.createTextNode(' – ' + date));
-            }
-            list.appendChild(li);
-        });
-        historicalEvents.appendChild(list);
-        eventSearchMessage.textContent = 'Gevonden';
-        eventSearchMessage.className = 'description-message success';
-    } catch (error) {
-        historicalEvents.hidden = false;
-        historicalEvents.innerHTML = '<h3>Gevonden gebeurtenissen</h3><div class="events-status">Bron tijdelijk niet beschikbaar</div>';
-        eventSearchMessage.textContent = 'Bron tijdelijk niet beschikbaar';
-        eventSearchMessage.className = 'description-message error';
-    }
-}
-
 async function loadHistoricalEvents(date) {
     historicalEvents.hidden = false;
     historicalEvents.innerHTML = '<div class="events-status">Historische gebeurtenissen laden…</div>';
@@ -658,12 +592,6 @@ weekInput.addEventListener('input', updateFromWeek);
 weekYearInput.addEventListener('input', updateFromWeek);
 
 descriptionInput.addEventListener('focus', () => clearOtherRows('description'));
-
-eventSearchInput.addEventListener('focus', () => clearOtherRows('event'));
-eventSearchButton.addEventListener('click', () => searchHistoricalEvents(eventSearchInput.value));
-eventSearchInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') searchHistoricalEvents(eventSearchInput.value);
-});
 
 searchDescription.addEventListener('click', () => {
     const value = descriptionInput.value.trim();
