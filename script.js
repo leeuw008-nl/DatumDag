@@ -14,6 +14,8 @@ const nextMonth = document.getElementById('nextMonth');
 const holidayList = document.getElementById('holidayList');
 const historicalEvents = document.getElementById('historicalEvents');
 const calendarSection = document.querySelector('.calendar-section');
+const sourceWikidata = document.getElementById('sourceWikidata');
+const sourceOudOmmen = document.getElementById('sourceOudOmmen');
 
 const maanden = [
     'januari','februari','maart','april','mei','juni',
@@ -27,6 +29,10 @@ let selectedWeek = null;
 let historicalEventDates = new Set();
 let historicalEventDetails = new Map();
 let historicalEventsMonthKey = '';
+let wikidataEventDates = new Set();
+let oudOmmenEventDates = new Set();
+let oudOmmenEventDetails = new Map();
+let sourceLoadingCount = 0;
 
 function pad(value) {
     return String(value).padStart(2, '0');
@@ -326,37 +332,74 @@ async function loadHistoricalEventMarkers(year, month) {
     const monthKey = `${year}-${pad(month + 1)}`;
     historicalEventsMonthKey = monthKey;
     historicalEventDates = new Set();
+    wikidataEventDates = new Set();
+    oudOmmenEventDates = new Set();
     historicalEventDetails = new Map();
+    oudOmmenEventDetails = new Map();
     calendarSection.classList.remove('events-loaded');
 
     const startDate = `${year}-${pad(month + 1)}-01T00:00:00Z`;
     const nextMonth = new Date(year, month + 1, 1);
     const endDate = `${nextMonth.getFullYear()}-${pad(nextMonth.getMonth() + 1)}-01T00:00:00Z`;
 
-    // Alleen de datums ophalen. Details worden pas opgehaald wanneer
-    // de gebruiker een gemarkeerde kalenderdatum aanklikt.
-    const query = 'SELECT DISTINCT ?date WHERE { ?item wdt:P585 ?date. FILTER(?date >= "' + startDate + '"^^xsd:dateTime && ?date < "' + endDate + '"^^xsd:dateTime) FILTER(EXISTS { ?item wdt:P17 wd:Q55. } || EXISTS { ?item wdt:P276/wdt:P17 wd:Q55. }) } LIMIT 1000';
+    const loaders = [];
+    if (sourceWikidata.checked) loaders.push(loadWikidataEventMarkers(startDate, endDate, monthKey));
+    if (sourceOudOmmen.checked) loaders.push(loadOudOmmenEventMarkers(startDate, endDate, monthKey));
 
+    if (!loaders.length) {
+        historicalEventsMonthKey = monthKey;
+        calendarSection.classList.add('events-loaded');
+        renderCalendar();
+        return;
+    }
+
+    sourceLoadingCount = loaders.length;
+    await Promise.allSettled(loaders);
+
+    if (historicalEventsMonthKey === monthKey) {
+        historicalEventDates = new Set([...wikidataEventDates, ...oudOmmenEventDates]);
+        calendarSection.classList.add('events-loaded');
+        renderCalendar();
+    }
+}
+
+async function loadWikidataEventMarkers(startDate, endDate, monthKey) {
+    const query = 'SELECT DISTINCT ?date WHERE { ?item wdt:P585 ?date. FILTER(?date >= "' + startDate + '"^^xsd:dateTime && ?date < "' + endDate + '"^^xsd:dateTime) FILTER(EXISTS { ?item wdt:P17 wd:Q55. } || EXISTS { ?item wdt:P276/wdt:P17 wd:Q55. }) } LIMIT 1000';
     try {
         const response = await fetch('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(query), {
             headers: { 'Accept': 'application/sparql-results+json' }
         });
         if (!response.ok) throw new Error('Wikidata request failed');
-
         const data = await response.json();
-        const rows = data.results.bindings || [];
-
-        rows.forEach(row => {
+        (data.results.bindings || []).forEach(row => {
             const value = row.date?.value;
-            if (value) historicalEventDates.add(value.slice(0, 10));
+            if (value) wikidataEventDates.add(value.slice(0, 10));
         });
-
-        if (historicalEventsMonthKey === monthKey) {
-            calendarSection.classList.add('events-loaded');
-            renderCalendar();
-        }
     } catch (error) {
-        calendarSection.classList.remove('events-loaded');
+        // De kalender blijft bruikbaar als een bron tijdelijk niet bereikbaar is.
+    }
+}
+
+async function loadOudOmmenEventMarkers(startDate, endDate, monthKey) {
+    const apiStart = startDate.slice(0, 10) + 'T00:00:00';
+    const apiEnd = endDate.slice(0, 10) + 'T23:59:59';
+    const url = 'https://weblog.oudommen.nl/wp-json/wp/v2/posts?after=' + encodeURIComponent(apiStart) + '&before=' + encodeURIComponent(apiEnd) + '&per_page=100&_fields=date,link,title';
+    try {
+        const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        if (!response.ok) throw new Error('OudOmmen request failed');
+        const posts = await response.json();
+        posts.forEach(post => {
+            const date = post.date?.slice(0, 10);
+            if (!date) return;
+            oudOmmenEventDates.add(date);
+            if (!oudOmmenEventDetails.has(date)) oudOmmenEventDetails.set(date, []);
+            oudOmmenEventDetails.get(date).push({
+                item: post.link || '',
+                label: post.title?.rendered || 'OudOmmen.nl'
+            });
+        });
+    } catch (error) {
+        // De kalender blijft bruikbaar als OudOmmen tijdelijk niet bereikbaar is.
     }
 }
 
@@ -402,60 +445,35 @@ function renderHolidayList(year, month) {
 
 function renderHistoricalEventDetails(rows) {
     historicalEvents.hidden = false;
-    historicalEvents.innerHTML = '<h3>Historische gebeurtenissen</h3>';
+    historicalEvents.innerHTML = '<h3>Historische gebeurtenissen en artikelen</h3>';
     if (!rows.length) {
-        historicalEvents.innerHTML += '<div class="events-status">Geen gebeurtenissen gevonden</div>';
+        historicalEvents.innerHTML += '<div class="events-status">Geen resultaten gevonden</div>';
         return;
     }
 
     const list = document.createElement('ul');
-    rows.slice(0, 12).forEach(row => {
+    rows.slice(0, 24).forEach(row => {
         const li = document.createElement('li');
-        const link = document.createElement('a');
-        link.href = row.item;
-        link.target = '_blank';
-        link.rel = 'noopener';
-        link.textContent = row.label;
-        li.appendChild(link);
+        if (row.source) {
+            const source = document.createElement('small');
+            source.textContent = row.source + ' – ';
+            source.style.opacity = '0.65';
+            li.appendChild(source);
+        }
+        if (row.item) {
+            const link = document.createElement('a');
+            link.href = row.item;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            link.textContent = row.label;
+            li.appendChild(link);
+        } else {
+            li.appendChild(document.createTextNode(row.label));
+        }
         if (row.description) li.appendChild(document.createTextNode(' – ' + row.description));
         list.appendChild(li);
     });
     historicalEvents.appendChild(list);
-}
-
-async function loadHistoricalEvents(date) {
-    const cached = historicalEventDetails.get(toDateKey(date));
-    if (cached) {
-        renderHistoricalEventDetails(cached);
-        return;
-    }
-
-    historicalEvents.hidden = false;
-    historicalEvents.innerHTML = '<div class="events-status">Historische gebeurtenissen laden…</div>';
-
-    const dateString = date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 'T00:00:00Z';
-    const query = 'SELECT DISTINCT ?item ?itemLabel ?description WHERE { ?item wdt:P585 "' + dateString + '"^^xsd:dateTime. { ?item wdt:P17 wd:Q55. } UNION { ?item wdt:P276/wdt:P17 wd:Q55. } UNION { ?item wdt:P19/wdt:P17 wd:Q55. } OPTIONAL { ?item schema:description ?description. FILTER(LANG(?description) = "nl") } SERVICE wikibase:label { bd:serviceParam wikibase:language "nl,en". } } LIMIT 12';
-
-    try {
-        const response = await fetch('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(query), { headers: { 'Accept': 'application/sparql-results+json' } });
-        if (!response.ok) throw new Error('Wikidata request failed');
-        const data = await response.json();
-        const rows = data.results.bindings || [];
-        if (!rows.length) {
-            renderHistoricalEventDetails([]);
-            return;
-        }
-
-        const mappedRows = rows.map(row => ({
-            item: row.item.value,
-            label: row.itemLabel?.value || 'Gebeurtenis',
-            description: row.description?.value || ''
-        }));
-        historicalEventDetails.set(toDateKey(date), mappedRows);
-        renderHistoricalEventDetails(mappedRows);
-    } catch (error) {
-        historicalEvents.innerHTML = '<h3>Historische gebeurtenissen</h3><div class="events-status">Bron tijdelijk niet beschikbaar</div>';
-    }
 }
 
 function renderCalendar() {
@@ -601,6 +619,18 @@ prevMonth.addEventListener('click', () => {
 nextMonth.addEventListener('click', () => {
     clearHistoricalEventsDisplay();
     viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1);
+    renderCalendar();
+});
+
+sourceWikidata.addEventListener('change', () => {
+    clearHistoricalEventsDisplay();
+    historicalEventsMonthKey = '';
+    renderCalendar();
+});
+
+sourceOudOmmen.addEventListener('change', () => {
+    clearHistoricalEventsDisplay();
+    historicalEventsMonthKey = '';
     renderCalendar();
 });
 
