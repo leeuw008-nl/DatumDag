@@ -24,6 +24,8 @@ let viewDate = new Date();
 let selectedDate = null;
 let selectedDates = [];
 let selectedWeek = null;
+let historicalEventDates = new Set();
+let historicalEventsMonthKey = '';
 
 function pad(value) {
     return String(value).padStart(2, '0');
@@ -353,6 +355,39 @@ function parseDescription(value) {
     return false;
 }
 
+async function loadHistoricalEventMarkers(year, month) {
+    const monthKey = `${year}-${pad(month + 1)}`;
+    historicalEventsMonthKey = monthKey;
+    historicalEventDates = new Set();
+
+    const startDate = `${year}-${pad(month + 1)}-01T00:00:00Z`;
+    const nextMonth = new Date(year, month + 1, 1);
+    const endDate = `${nextMonth.getFullYear()}-${pad(nextMonth.getMonth() + 1)}-01T00:00:00Z`;
+
+    const query = 'SELECT DISTINCT ?date WHERE { ?item wdt:P31/wdt:P279* wd:Q1190554. ?item wdt:P585 ?date. FILTER(?date >= "' + startDate + '"^^xsd:dateTime && ?date < "' + endDate + '"^^xsd:dateTime) { ?item wdt:P17 wd:Q55. } UNION { ?item wdt:P276/wdt:P17 wd:Q55. } } LIMIT 300';
+
+    try {
+        const response = await fetch('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(query), {
+            headers: { 'Accept': 'application/sparql-results+json' }
+        });
+        if (!response.ok) throw new Error('Wikidata request failed');
+
+        const data = await response.json();
+        const rows = data.results.bindings || [];
+
+        rows.forEach(row => {
+            const value = row.date?.value;
+            if (value) historicalEventDates.add(value.slice(0, 10));
+        });
+
+        if (historicalEventsMonthKey === monthKey) {
+            renderCalendar();
+        }
+    } catch (error) {
+        // Geen marker bij een tijdelijke fout; de kalender blijft gewoon bruikbaar.
+    }
+}
+
 function showDescriptionMessage(message, type = '') {
     descriptionMessage.textContent = message;
     descriptionMessage.className = 'description-message' + (type ? ' ' + type : '');
@@ -443,6 +478,11 @@ function renderCalendar() {
     calendar.innerHTML = '';
     renderHolidayList(year, month);
 
+    const monthKey = `${year}-${pad(month + 1)}`;
+    if (historicalEventsMonthKey !== monthKey) {
+        loadHistoricalEventMarkers(year, month);
+    }
+
     const firstDay = new Date(year, month, 1);
     const startOffset = (firstDay.getDay() + 6) % 7;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -494,9 +534,23 @@ function renderCalendar() {
         }
 
         const holidayName = getDutchHolidays(cellDate.getFullYear()).get(toDateKey(cellDate));
+        const hasHistoricalEvent = historicalEventDates.has(toDateKey(cellDate));
         if (holidayName) {
             button.classList.add('holiday');
             button.title = holidayName;
+        }
+
+        if (hasHistoricalEvent) {
+            button.classList.add('historical-event');
+            if (holidayName) {
+                button.title = holidayName + ' · historische gebeurtenis beschikbaar';
+            } else {
+                button.title = 'Historische gebeurtenis beschikbaar';
+            }
+            const marker = document.createElement('span');
+            marker.className = 'historical-event-dot';
+            marker.setAttribute('aria-hidden', 'true');
+            button.appendChild(marker);
         }
 
         if (highlight) {
