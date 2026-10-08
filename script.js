@@ -517,7 +517,7 @@ searchDescription.addEventListener('click', () => {
         clearCalendarSelection();
         showDescriptionMessage('Niets gevonden', 'error');
     } else {
-        showDescriptionMessage('Invoer voldoet niet aan de voorwaarden.', 'error');
+        showDescriptionMessage('Invoer voldoet niet aan de voorwaarden', 'error');
     }
 });
 
