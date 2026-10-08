@@ -657,7 +657,7 @@ function renderCalendar() {
             const marker = document.createElement('span');
             marker.className = 'oudommen-event-marker';
             const logo = document.createElement('img');
-            logo.src = 'https://weblog.oudommen.nl/wp-content/uploads/2006/04/OudOmmen-klein.png';
+            logo.src = 'https://ommen-push-v2.leeuw008.workers.dev/proxy?url=' + encodeURIComponent('https://weblog.oudommen.nl/wp-content/uploads/2006/04/OudOmmen-klein.png') + '&t=' + Date.now();
             logo.alt = 'OudOmmen.nl';
             logo.loading = 'lazy';
             marker.appendChild(logo);
