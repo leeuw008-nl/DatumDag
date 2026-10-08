@@ -1,6 +1,6 @@
 {
     "id": "./",
-    "name": "OudOmmen-kalender",
+    "name": "Kalender-OudOmmen",
     "short_name": "OudOmmen",
     "description": "Vind historische publicaties van OudOmmen.nl via de publicatiedatum",
     "start_url": "./",
