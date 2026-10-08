@@ -544,10 +544,15 @@ const infoButton = document.getElementById('infoButton');
 const infoPanel = document.getElementById('infoPanel');
 const infoClose = document.getElementById('infoClose');
 
+function setInfoOpen(open) {
+    infoPanel.hidden = !open;
+    document.body.classList.toggle('info-open', open);
+}
+
 infoButton.addEventListener('click', () => {
-    infoPanel.hidden = !infoPanel.hidden;
+    setInfoOpen(infoPanel.hidden);
 });
 
 infoClose.addEventListener('click', () => {
-    infoPanel.hidden = true;
+    setInfoOpen(false);
 });
