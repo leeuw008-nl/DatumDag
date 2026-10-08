@@ -248,8 +248,11 @@ function parseDescription(value) {
         // Zoek op alleen een jaar + een feestdaggroep en toon beide dagen.
         const groupAliases = [
             ['pasen', 'Eerste Paasdag'],
+            ['paasdagen', 'Eerste Paasdag'],
             ['pinksteren', 'Eerste Pinksterdag'],
-            ['kerst', 'Eerste Kerstdag']
+            ['pinksterdagen', 'Eerste Pinksterdag'],
+            ['kerst', 'Eerste Kerstdag'],
+            ['kerstdagen', 'Eerste Kerstdag']
         ];
 
         for (const [alias, firstHolidayName] of groupAliases) {
@@ -467,6 +470,7 @@ function renderCalendar() {
             setDateInputs(cellDate);
             clearWeekInputs();
             selectedDate = new Date(cellDate);
+            selectedDates = [];
             selectedWeek = null;
             viewDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), 1);
             renderCalendar();
@@ -496,14 +500,14 @@ searchDescription.addEventListener('click', () => {
     const value = descriptionInput.value.trim();
 
     if (!value) {
-        showDescriptionMessage('Invoer voldoet niet aan de voorwaarden.', 'error');
+        showDescriptionMessage('Invoer voldoet niet aan de voorwaarden', 'error');
         return;
     }
 
     if (parseDescription(value)) {
-        showDescriptionMessage('Gevonden.', 'success');
+        showDescriptionMessage('Gevonden', 'success');
     } else if (/\d{4}/.test(value) || /\d{1,2}[\-\/\.]\d{1,2}[\-\/\.]\d{4}/.test(value)) {
-        showDescriptionMessage('Niets gevonden.', 'error');
+        showDescriptionMessage('Niets gevonden', 'error');
     } else {
         showDescriptionMessage('Invoer voldoet niet aan de voorwaarden.', 'error');
     }
