@@ -364,7 +364,7 @@ async function loadHistoricalEventMarkers(year, month) {
     const nextMonth = new Date(year, month + 1, 1);
     const endDate = `${nextMonth.getFullYear()}-${pad(nextMonth.getMonth() + 1)}-01T00:00:00Z`;
 
-    const query = 'SELECT DISTINCT ?date WHERE { ?item wdt:P31/wdt:P279* wd:Q1190554. ?item wdt:P585 ?date. FILTER(?date >= "' + startDate + '"^^xsd:dateTime && ?date < "' + endDate + '"^^xsd:dateTime) FILTER(EXISTS { ?item wdt:P17 wd:Q55. } || EXISTS { ?item wdt:P276/wdt:P17 wd:Q55. }) } LIMIT 300';
+    const query = 'SELECT DISTINCT ?date WHERE { ?item wdt:P585 ?date. FILTER(?date >= "' + startDate + '"^^xsd:dateTime && ?date < "' + endDate + '"^^xsd:dateTime) FILTER(EXISTS { ?item wdt:P17 wd:Q55. } || EXISTS { ?item wdt:P276/wdt:P17 wd:Q55. }) } LIMIT 1000';
 
     try {
         const response = await fetch('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(query), {
