@@ -527,7 +527,7 @@ async function loadOudOmmenEventMarkers(year, month) {
     renderCalendar();
 }
 
-function renderOudOmmenDetails(key) {
+function clearOudOmmenDetails() {\n    historicalEvents.hidden = true;\n    historicalEvents.innerHTML = '';\n}\n\nfunction renderOudOmmenDetails(key) {
     const rows = oudOmmenEventDetails.get(key) || [];
     historicalEvents.hidden = false;
     historicalEvents.innerHTML = '<h3>OudOmmen.nl</h3>';
