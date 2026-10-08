@@ -13,6 +13,7 @@ const prevMonth = document.getElementById('prevMonth');
 const nextMonth = document.getElementById('nextMonth');
 const holidayList = document.getElementById('holidayList');
 const historicalEvents = document.getElementById('historicalEvents');
+const calendarSection = document.querySelector('.calendar-section');
 
 const maanden = [
     'januari','februari','maart','april','mei','juni',
@@ -88,7 +89,6 @@ function addDays(date, days) {
 
 function getDutchHolidays(year) {
     const holidays = new Map();
-
     const add = (date, name) => holidays.set(toDateKey(date), name);
 
     add(new Date(year, 0, 1), 'Nieuwjaarsdag');
@@ -101,8 +101,6 @@ function getDutchHolidays(year) {
     add(addDays(easter, 49), 'Eerste Pinksterdag');
     add(addDays(easter, 50), 'Tweede Pinksterdag');
 
-    // Historische Koninginnedag: 31 augustus onder Wilhelmina (1891–1948),
-    // 30 april onder Juliana en Beatrix (1949–2013).
     if (year >= 1891 && year <= 1948) {
         add(new Date(year, 7, 31), 'Koninginnedag');
     } else if (year >= 1949 && year <= 2013) {
@@ -113,8 +111,6 @@ function getDutchHolidays(year) {
         add(kingsDay, 'Koningsdag');
     }
 
-    // Bevrijdingsdag is sinds 2021 jaarlijks een officiële vrije dag.
-    // Voor oudere jaren markeren we de bekende vijfjaarlijkse viering.
     if (year >= 2021 || (year >= 1990 && year % 5 === 0)) {
         add(new Date(year, 4, 5), 'Bevrijdingsdag');
     }
@@ -124,7 +120,6 @@ function getDutchHolidays(year) {
 
     return holidays;
 }
-
 
 function populateMonths() {
     monthInput.innerHTML = '';
@@ -159,15 +154,9 @@ function clearHistoricalEventsDisplay() {
 }
 
 function clearOtherRows(activeRow) {
-    if (activeRow !== 'date') {
-        clearDateInputs();
-    }
-    if (activeRow !== 'week') {
-        clearWeekInputs();
-    }
-    if (activeRow !== 'description') {
-        descriptionInput.value = '';
-    }
+    if (activeRow !== 'date') clearDateInputs();
+    if (activeRow !== 'week') clearWeekInputs();
+    if (activeRow !== 'description') descriptionInput.value = '';
     selectedDate = null;
     selectedDates = [];
     selectedWeek = null;
@@ -185,9 +174,7 @@ function validDateFromInputs() {
     }
 
     const date = new Date(year, month, day);
-    if (date.getFullYear() !== year || date.getMonth() !== month || date.getDate() !== day) {
-        return null;
-    }
+    if (date.getFullYear() !== year || date.getMonth() !== month || date.getDate() !== day) return null;
     return date;
 }
 
@@ -197,9 +184,7 @@ function validWeekFromInputs() {
 
     if (!weekInput.value || !weekYearInput.value ||
         !Number.isInteger(week) || !Number.isInteger(year) ||
-        week < 1 || week > isoWeeksInYear(year) || year < 1000 || year > 2100) {
-        return null;
-    }
+        week < 1 || week > isoWeeksInYear(year) || year < 1000 || year > 2100) return null;
 
     return { week, year };
 }
@@ -247,21 +232,12 @@ function parseDescription(value) {
 
     if (year >= 1000 && year <= 2100) {
         const holidays = getDutchHolidays(year);
-        const normalized = text
-            .replace(/1e/g, 'eerste')
-            .replace(/2e/g, 'tweede')
-            .replace(/3e/g, 'derde')
-            .replace(/\s+/g, ' ')
-            .trim();
+        const normalized = text.replace(/1e/g, 'eerste').replace(/2e/g, 'tweede').replace(/3e/g, 'derde').replace(/\s+/g, ' ').trim();
 
-        // Zoek op alleen een jaar + een feestdaggroep en toon beide dagen.
         const groupAliases = [
-            ['pasen', 'Eerste Paasdag'],
-            ['paasdagen', 'Eerste Paasdag'],
-            ['pinksteren', 'Eerste Pinksterdag'],
-            ['pinksterdagen', 'Eerste Pinksterdag'],
-            ['kerst', 'Eerste Kerstdag'],
-            ['kerstdagen', 'Eerste Kerstdag']
+            ['pasen', 'Eerste Paasdag'], ['paasdagen', 'Eerste Paasdag'],
+            ['pinksteren', 'Eerste Pinksterdag'], ['pinksterdagen', 'Eerste Pinksterdag'],
+            ['kerst', 'Eerste Kerstdag'], ['kerstdagen', 'Eerste Kerstdag']
         ];
 
         for (const [alias, firstHolidayName] of groupAliases) {
@@ -280,15 +256,11 @@ function parseDescription(value) {
                 }
                 if (dates.length === 2) {
                     dates.sort((a, b) => a - b);
-                    // Toon de maand waarin de eerste dag valt en markeer beide dagen.
                     setDateInputs(dates[0]);
                     selectedDate = null;
                     selectedWeek = null;
                     viewDate = new Date(dates[0].getFullYear(), dates[0].getMonth(), 1);
                     renderCalendar();
-
-                    const first = dates[0];
-                    const second = dates[1];
                     dayInput.value = '';
                     monthInput.value = '';
                     yearInput.value = year;
@@ -300,18 +272,12 @@ function parseDescription(value) {
         }
 
         const holidayAliases = [
-            ['koninginnedag', 'Koninginnedag'],
-            ['koningsdag', 'Koningsdag'],
-            ['nieuwjaarsdag', 'Nieuwjaarsdag'],
-            ['goede vrijdag', 'Goede Vrijdag'],
-            ['eerste paasdag', 'Eerste Paasdag'],
-            ['tweede paasdag', 'Tweede Paasdag'],
-            ['eerste pinksterdag', 'Eerste Pinksterdag'],
-            ['tweede pinksterdag', 'Tweede Pinksterdag'],
-            ['hemelvaartsdag', 'Hemelvaartsdag'],
-            ['bevrijdingsdag', 'Bevrijdingsdag'],
-            ['eerste kerstdag', 'Eerste Kerstdag'],
-            ['tweede kerstdag', 'Tweede Kerstdag']
+            ['koninginnedag', 'Koninginnedag'], ['koningsdag', 'Koningsdag'],
+            ['nieuwjaarsdag', 'Nieuwjaarsdag'], ['goede vrijdag', 'Goede Vrijdag'],
+            ['eerste paasdag', 'Eerste Paasdag'], ['tweede paasdag', 'Tweede Paasdag'],
+            ['eerste pinksterdag', 'Eerste Pinksterdag'], ['tweede pinksterdag', 'Tweede Pinksterdag'],
+            ['hemelvaartsdag', 'Hemelvaartsdag'], ['bevrijdingsdag', 'Bevrijdingsdag'],
+            ['eerste kerstdag', 'Eerste Kerstdag'], ['tweede kerstdag', 'Tweede Kerstdag']
         ];
 
         for (const [alias, holidayName] of holidayAliases) {
@@ -333,9 +299,7 @@ function parseDescription(value) {
     let match = text.match(/^(\d{1,2})[\-\/\.](\d{1,2})[\-\/\.](\d{4})$/);
     if (match) {
         const date = new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
-        if (date.getFullYear() === Number(match[3]) &&
-            date.getMonth() === Number(match[2]) - 1 &&
-            date.getDate() === Number(match[1])) {
+        if (date.getFullYear() === Number(match[3]) && date.getMonth() === Number(match[2]) - 1 && date.getDate() === Number(match[1])) {
             setDateInputs(date);
             updateFromDate();
             return true;
@@ -347,9 +311,7 @@ function parseDescription(value) {
     match = text.match(/(\d{1,2}).*?(\d{4})/);
     if (monthIndex >= 0 && match) {
         const date = new Date(Number(match[2]), monthIndex, Number(match[1]));
-        if (date.getFullYear() === Number(match[2]) &&
-            date.getMonth() === monthIndex &&
-            date.getDate() === Number(match[1])) {
+        if (date.getFullYear() === Number(match[2]) && date.getMonth() === monthIndex && date.getDate() === Number(match[1])) {
             setDateInputs(date);
             updateFromDate();
             return true;
@@ -365,6 +327,7 @@ async function loadHistoricalEventMarkers(year, month) {
     historicalEventsMonthKey = monthKey;
     historicalEventDates = new Set();
     historicalEventDetails = new Map();
+    calendarSection.classList.remove('events-loaded');
 
     const startDate = `${year}-${pad(month + 1)}-01T00:00:00Z`;
     const nextMonth = new Date(year, month + 1, 1);
@@ -395,10 +358,11 @@ async function loadHistoricalEventMarkers(year, month) {
         });
 
         if (historicalEventsMonthKey === monthKey) {
+            calendarSection.classList.add('events-loaded');
             renderCalendar();
         }
     } catch (error) {
-        // Geen marker bij een tijdelijke fout; de kalender blijft gewoon bruikbaar.
+        calendarSection.classList.remove('events-loaded');
     }
 }
 
@@ -413,6 +377,7 @@ function clearCalendarSelection() {
     selectedWeek = null;
     renderCalendar();
 }
+
 function renderHolidayList(year, month) {
     const holidays = getDutchHolidays(year);
     const monthHolidays = [];
@@ -420,15 +385,11 @@ function renderHolidayList(year, month) {
     holidays.forEach((name, key) => {
         const parts = key.split('-').map(Number);
         if (parts[0] === year && parts[1] === month + 1) {
-            monthHolidays.push({
-                date: new Date(parts[0], parts[1] - 1, parts[2]),
-                name
-            });
+            monthHolidays.push({ date: new Date(parts[0], parts[1] - 1, parts[2]), name });
         }
     });
 
     monthHolidays.sort((a, b) => a.date - b.date);
-
     holidayList.innerHTML = '';
 
     if (monthHolidays.length === 0) {
@@ -437,7 +398,6 @@ function renderHolidayList(year, month) {
     }
 
     holidayList.style.display = 'block';
-
     monthHolidays.forEach(holiday => {
         const item = document.createElement('div');
         item.className = 'holiday-item';
@@ -453,6 +413,7 @@ function renderHistoricalEventDetails(rows) {
         historicalEvents.innerHTML += '<div class="events-status">Geen gebeurtenissen gevonden</div>';
         return;
     }
+
     const list = document.createElement('ul');
     rows.slice(0, 12).forEach(row => {
         const li = document.createElement('li');
@@ -486,26 +447,23 @@ async function loadHistoricalEvents(date) {
         if (!response.ok) throw new Error('Wikidata request failed');
         const data = await response.json();
         const rows = data.results.bindings || [];
-        if (!rows.length) { renderHistoricalEventDetails([]); return; }
-        const mappedRows = rows.map(row => ({ item: row.item.value, label: row.itemLabel?.value || 'Gebeurtenis', description: row.description?.value || '' }));
+        if (!rows.length) {
+            renderHistoricalEventDetails([]);
+            return;
+        }
+
+        const mappedRows = rows.map(row => ({
+            item: row.item.value,
+            label: row.itemLabel?.value || 'Gebeurtenis',
+            description: row.description?.value || ''
+        }));
         historicalEventDetails.set(toDateKey(date), mappedRows);
         renderHistoricalEventDetails(mappedRows);
-        return;
-        const list = document.createElement('ul');
-        rows.forEach(row => {
-            const li = document.createElement('li');
-            const link = document.createElement('a');
-            link.href = row.item.value; link.target = '_blank'; link.rel = 'noopener';
-            link.textContent = row.itemLabel?.value || 'Gebeurtenis';
-            li.appendChild(link);
-            if (row.description?.value) li.appendChild(document.createTextNode(' – ' + row.description.value));
-            list.appendChild(li);
-        });
-        historicalEvents.appendChild(list);
     } catch (error) {
         historicalEvents.innerHTML = '<h3>Historische gebeurtenissen</h3><div class="events-status">Bron tijdelijk niet beschikbaar</div>';
     }
 }
+
 function renderCalendar() {
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
@@ -556,30 +514,22 @@ function renderCalendar() {
         if (otherMonth) button.classList.add('other-month');
 
         const today = new Date();
-        if (toDateKey(cellDate) === toDateKey(today)) {
-            button.classList.add('today');
-        }
+        if (toDateKey(cellDate) === toDateKey(today)) button.classList.add('today');
 
         let highlight = false;
         let weekHighlight = false;
 
-        if (selectedDate) {
-            highlight = toDateKey(cellDate) === toDateKey(selectedDate);
-        }
-
-        if (selectedDates.length) {
-            highlight = selectedDates.some(date => toDateKey(cellDate) === toDateKey(date));
-        }
+        if (selectedDate) highlight = toDateKey(cellDate) === toDateKey(selectedDate);
+        if (selectedDates.length) highlight = selectedDates.some(date => toDateKey(cellDate) === toDateKey(date));
 
         if (selectedWeek) {
-            weekHighlight =
-                getISOWeek(cellDate) === selectedWeek.week &&
-                getISOWeekYear(cellDate) === selectedWeek.year;
+            weekHighlight = getISOWeek(cellDate) === selectedWeek.week && getISOWeekYear(cellDate) === selectedWeek.year;
             highlight = weekHighlight;
         }
 
         const holidayName = getDutchHolidays(cellDate.getFullYear()).get(toDateKey(cellDate));
         const hasHistoricalEvent = historicalEventDates.has(toDateKey(cellDate));
+
         if (holidayName) {
             button.classList.add('holiday');
             button.title = holidayName;
@@ -587,11 +537,7 @@ function renderCalendar() {
 
         if (hasHistoricalEvent) {
             button.classList.add('historical-event');
-            if (holidayName) {
-                button.title = holidayName + ' · historische gebeurtenis beschikbaar';
-            } else {
-                button.title = 'Historische gebeurtenis beschikbaar';
-            }
+            button.title = holidayName ? holidayName + ' · historische gebeurtenis beschikbaar' : 'Historische gebeurtenis beschikbaar';
             const marker = document.createElement('span');
             marker.className = 'historical-event-dot';
             marker.setAttribute('aria-hidden', 'true');
