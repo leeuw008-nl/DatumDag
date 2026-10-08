@@ -105,9 +105,20 @@ function renderHistory() {
 }
 
 // Kalender
-calendarBtn.addEventListener('click', () => {
-    datePicker.showPicker ? datePicker.showPicker() : datePicker.click();
-});
+function openCalendar() {
+    if (datePicker.showPicker) {
+        try {
+            datePicker.showPicker();
+            return true;
+        } catch (error) {
+            // Sommige browsers staan showPicker alleen toe na een gebruikersactie.
+        }
+    }
+    datePicker.click();
+    return true;
+}
+
+calendarBtn.addEventListener('click', openCalendar);
 
 datePicker.addEventListener('change', () => {
     if (datePicker.value) {
@@ -142,3 +153,10 @@ yearSelect.value = today.getFullYear();
 
 updateDisplay();
 renderHistory();
+
+// Probeer de kalender direct te openen zodra de app is geladen.
+// Browsers die dit blokkeren wegens het ontbreken van een gebruikersactie
+// laten de bestaande knop beschikbaar.
+setTimeout(() => {
+    openCalendar();
+}, 250);
