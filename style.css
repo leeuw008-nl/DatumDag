@@ -272,6 +272,11 @@ input:focus, select:focus {
 .calendar-day {
     width: 100%;
     height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    visibility: visible;
+    opacity: 1;
     border: 0;
     border-radius: 9px;
     background: transparent;
