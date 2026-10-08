@@ -1,7 +1,7 @@
 {
-    "name": "Dag van de Week",
-    "short_name": "Dag van de Week",
-    "description": "Vind snel de dag van de week voor elke historische datum",
+    "name": "OudOmmen-kalender",
+    "short_name": "OudOmmen-kalender",
+    "description": "Vind historische publicaties van OudOmmen.nl via de publicatiedatum",
     "start_url": "index.html",
     "display": "standalone",
     "background_color": "#667eea",
