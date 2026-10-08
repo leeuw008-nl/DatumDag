@@ -15,6 +15,9 @@ const nextMonth = document.getElementById('nextMonth');
 const holidayList = document.getElementById('holidayList');
 const sourceOudOmmen = document.getElementById('sourceOudOmmen');
 const historicalEvents = document.getElementById('historicalEvents');
+const oudOmmenCount = document.getElementById('oudOmmenCount');
+let oudOmmenTotalCount = 0;
+let oudOmmenMonthCount = 0;
 
 let oudOmmenEventDates = new Set();
 let oudOmmenEventDetails = new Map();
@@ -381,6 +384,26 @@ async function fetchOudOmmenJson(url) {
     }
 }
 
+async function fetchOudOmmenTotal() {
+    const url = 'https://weblog.oudommen.nl/wp-json/wp/v2/posts?per_page=1&_fields=id';
+    const proxy = 'https://ommen-push-v2.leeuw008.workers.dev/proxy?url=' + encodeURIComponent(url) + '&t=' + Date.now();
+    try {
+        const response = await fetch(proxy, { cache: 'no-store' });
+        const total = Number(response.headers.get('X-WP-Total') || 0);
+        if (total > 0) oudOmmenTotalCount = total;
+    } catch (error) {}
+    updateOudOmmenCount();
+}
+
+function updateOudOmmenCount() {
+    if (!oudOmmenCount) return;
+    if (oudOmmenTotalCount > 0) {
+        oudOmmenCount.textContent = 'OudOmmen.nl (' + oudOmmenMonthCount + ' van ' + oudOmmenTotalCount + ' artikelen)';
+    } else {
+        oudOmmenCount.textContent = 'OudOmmen.nl';
+    }
+}
+
 async function fetchOudOmmenFeed() {
     const feedUrl = 'https://weblog.oudommen.nl/feed/';
     const proxy = 'https://ommen-push-v2.leeuw008.workers.dev/proxy?url=' + encodeURIComponent(feedUrl) + '&t=' + Date.now();
@@ -524,6 +547,8 @@ async function loadOudOmmenEventMarkers(year, month) {
     }
 
     posts.forEach(addOudOmmenPost);
+    oudOmmenMonthCount = posts.length;
+    updateOudOmmenCount();
     renderCalendar();
 }
 
@@ -741,6 +766,7 @@ nextMonth.addEventListener('click', async () => {
 });
 
 populateMonths();
+fetchOudOmmenTotal();
 
 const today = new Date();
 setDateInputs(today);
