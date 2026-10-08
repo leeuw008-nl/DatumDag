@@ -656,7 +656,11 @@ function renderCalendar() {
             button.title = holidayName ? holidayName + ' · OudOmmen.nl' : 'OudOmmen.nl';
             const marker = document.createElement('span');
             marker.className = 'oudommen-event-marker';
-            marker.textContent = 'O';
+            const logo = document.createElement('img');
+            logo.src = 'https://weblog.oudommen.nl/wp-content/uploads/2006/04/OudOmmen-klein.png';
+            logo.alt = 'OudOmmen.nl';
+            logo.loading = 'lazy';
+            marker.appendChild(logo);
             button.appendChild(marker);
         }
         if (holidayName) {
