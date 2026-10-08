@@ -399,6 +399,74 @@ async function fetchOudOmmenFeed() {
     }
 }
 
+async function fetchOudOmmenDateArchive(year, month) {
+    // WordPress heeft naast de REST-API ook datumarchieven.
+    // Dit is de historische fallback voor oude maanden, zoals april 2006.
+    const archiveUrl = 'https://weblog.oudommen.nl/' + year + '/' + pad(month + 1) + '/';
+    const proxy = 'https://ommen-push-v2.leeuw008.workers.dev/proxy?url=' + encodeURIComponent(archiveUrl) + '&t=' + Date.now();
+
+    try {
+        const response = await fetch(proxy, { cache: 'no-store' });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+
+        const html = await response.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const posts = [];
+
+        doc.querySelectorAll('article').forEach(article => {
+            const time = article.querySelector('time');
+            const link = article.querySelector('h1 a, h2 a, h3 a, h4 a');
+            if (!time || !link) return;
+
+            const date = time.getAttribute('datetime') || time.textContent || '';
+            const title = link.textContent.trim();
+            const href = link.href;
+            const parsed = new Date(date);
+
+            if (!isNaN(parsed.getTime()) &&
+                parsed.getFullYear() === year &&
+                parsed.getMonth() === month &&
+                href && title) {
+                posts.push({ date, link: href, title });
+            }
+        });
+
+        // Sommige oudere WordPress-thema's gebruiken geen <article>-element.
+        // Zoek daarom ook naar datum-links/titels in de hoofdinhoud.
+        if (!posts.length) {
+            const datePattern = new RegExp(
+                '(?:januari|februari|maart|april|mei|juni|juli|augustus|september|oktober|november|december)\\s+\\d{1,2},?\\s+' + year,
+                'i'
+            );
+
+            doc.querySelectorAll('a').forEach(link => {
+                const href = link.href;
+                const title = link.textContent.trim();
+                if (!href || !title || title.length < 2 || title.length > 180) return;
+
+                const block = link.closest('div, li, section, header, main');
+                const text = block ? block.textContent : '';
+                if (!datePattern.test(text)) return;
+
+                const match = text.match(datePattern);
+                if (!match) return;
+
+                const parsed = new Date(match[0]);
+                if (!isNaN(parsed.getTime()) &&
+                    parsed.getFullYear() === year &&
+                    parsed.getMonth() === month &&
+                    !posts.some(post => post.link === href)) {
+                    posts.push({ date: parsed.toISOString(), link: href, title });
+                }
+            });
+        }
+
+        return posts;
+    } catch (error) {
+        return [];
+    }
+}
+
 function addOudOmmenPost(post) {
     const date = new Date(post.date);
     if (isNaN(date.getTime())) return;
@@ -438,8 +506,13 @@ async function loadOudOmmenEventMarkers(year, month) {
 
     let posts = await fetchOudOmmenJson(url);
 
-    // De WordPress REST-koppeling kan incidenteel via de proxy geen JSON teruggeven.
-    // Gebruik daarom de RSS-feed als betrouwbare fallback voor recente artikelen.
+    // Als de REST-API geen berichten teruggeeft, probeer eerst het datumarchief.
+    // Dit is juist bedoeld voor historische maanden zoals april 2006.
+    if (!posts.length) {
+        posts = await fetchOudOmmenDateArchive(year, month);
+    }
+
+    // RSS blijft als laatste fallback beschikbaar voor recente artikelen.
     if (!posts.length) {
         const feedPosts = await fetchOudOmmenFeed();
         posts = feedPosts.filter(post => {
