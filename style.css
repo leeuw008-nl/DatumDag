@@ -169,6 +169,23 @@ input:focus, select:focus {
     background: #667eea;
 }
 
+.calendar-day.holiday {
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+.calendar-day.holiday::before {
+    content: "★";
+    position: absolute;
+    top: 1px;
+    right: 3px;
+    font-size: 0.55rem;
+    line-height: 1;
+    opacity: 0.75;
+}
+
 @media (max-width: 420px) {
     .container {
         padding: 10px;
