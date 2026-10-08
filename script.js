@@ -13,6 +13,12 @@ const calendarWeekInfo = document.getElementById('calendarWeekInfo');
 const prevMonth = document.getElementById('prevMonth');
 const nextMonth = document.getElementById('nextMonth');
 const holidayList = document.getElementById('holidayList');
+const sourceOudOmmen = document.getElementById('sourceOudOmmen');
+const historicalEvents = document.getElementById('historicalEvents');
+
+let oudOmmenEventDates = new Set();
+let oudOmmenEventDetails = new Map();
+let historicalEventsMonthKey = '';
 
 const maanden = [
     'januari','februari','maart','april','mei','juni',
@@ -362,6 +368,77 @@ function clearCalendarSelection() {
     selectedWeek = null;
     renderCalendar();
 }
+
+async function fetchOudOmmenJson(url) {
+    const proxy = 'https://ommen-push-v2.leeuw008.workers.dev/proxy?url=' + encodeURIComponent(url) + '&t=' + Date.now();
+    try {
+        const response = await fetch(proxy, { cache: 'no-store' });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        return [];
+    }
+}
+
+async function loadOudOmmenEventMarkers(year, month) {
+    const monthKey = year + '-' + pad(month + 1);
+    if (historicalEventsMonthKey === monthKey) return;
+    historicalEventsMonthKey = monthKey;
+    oudOmmenEventDates = new Set();
+    oudOmmenEventDetails = new Map();
+    historicalEvents.hidden = true;
+
+    if (!sourceOudOmmen.checked) {
+        renderCalendar();
+        return;
+    }
+
+    const start = new Date(year, month, 1);
+    const end = new Date(year, month + 1, 1);
+    const after = start.toISOString();
+    const before = end.toISOString();
+    const url = 'https://weblog.oudommen.nl/wp-json/wp/v2/posts?after=' + encodeURIComponent(after) +
+        '&before=' + encodeURIComponent(before) +
+        '&per_page=100&orderby=date&order=asc&status=publish&_fields=date,link,title';
+
+    const posts = await fetchOudOmmenJson(url);
+    posts.forEach(post => {
+        const date = new Date(post.date);
+        if (isNaN(date.getTime())) return;
+        const key = toDateKey(date);
+        oudOmmenEventDates.add(key);
+        const title = post.title && post.title.rendered ? post.title.rendered : 'OudOmmen-artikel';
+        const cleanTitle = title.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&#8217;/g, '’').replace(/&#8216;/g, '‘').replace(/&#038;/g, '&');
+        if (!oudOmmenEventDetails.has(key)) oudOmmenEventDetails.set(key, []);
+        oudOmmenEventDetails.get(key).push({ title: cleanTitle, link: post.link, date: post.date });
+    });
+
+    renderCalendar();
+}
+
+function renderOudOmmenDetails(key) {
+    const rows = oudOmmenEventDetails.get(key) || [];
+    historicalEvents.hidden = false;
+    historicalEvents.innerHTML = '<h3>OudOmmen.nl</h3>';
+    if (!rows.length) {
+        historicalEvents.innerHTML += '<div class="events-status">Geen artikelen gevonden</div>';
+        return;
+    }
+    const list = document.createElement('ul');
+    rows.slice(0, 24).forEach(row => {
+        const li = document.createElement('li');
+        const link = document.createElement('a');
+        link.href = row.link;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = row.title;
+        li.appendChild(link);
+        list.appendChild(li);
+    });
+    historicalEvents.appendChild(list);
+}
+
 function renderHolidayList(year, month) {
     const holidays = getDutchHolidays(year);
     const monthHolidays = [];
@@ -463,6 +540,15 @@ function renderCalendar() {
         }
 
         const holidayName = getDutchHolidays(cellDate.getFullYear()).get(toDateKey(cellDate));
+        const oudOmmenEvent = oudOmmenEventDates.has(toDateKey(cellDate));
+        if (oudOmmenEvent) {
+            button.classList.add('oudommen-event');
+            button.title = holidayName ? holidayName + ' · OudOmmen.nl' : 'OudOmmen.nl';
+            const marker = document.createElement('span');
+            marker.className = 'oudommen-event-marker';
+            marker.textContent = 'O';
+            button.appendChild(marker);
+        }
         if (holidayName) {
             button.classList.add('holiday');
             button.title = holidayName;
@@ -474,6 +560,7 @@ function renderCalendar() {
         }
 
         button.addEventListener('click', () => {
+            if (oudOmmenEventDates.has(toDateKey(cellDate))) renderOudOmmenDetails(toDateKey(cellDate));
             setDateInputs(cellDate);
             clearWeekInputs();
             selectedDate = new Date(cellDate);
@@ -521,14 +608,20 @@ searchDescription.addEventListener('click', () => {
     }
 });
 
-prevMonth.addEventListener('click', () => {
+prevMonth.addEventListener('click', async () => {
+    historicalEventsMonthKey = '';
+    historicalEvents.hidden = true;
     viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1);
     renderCalendar();
+    await loadOudOmmenEventMarkers(viewDate.getFullYear(), viewDate.getMonth());
 });
 
-nextMonth.addEventListener('click', () => {
+nextMonth.addEventListener('click', async () => {
+    historicalEventsMonthKey = '';
+    historicalEvents.hidden = true;
     viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1);
     renderCalendar();
+    await loadOudOmmenEventMarkers(viewDate.getFullYear(), viewDate.getMonth());
 });
 
 populateMonths();
@@ -539,6 +632,16 @@ selectedDate = new Date(today);
 viewDate = new Date(today.getFullYear(), today.getMonth(), 1);
 
 renderCalendar();
+loadOudOmmenEventMarkers(viewDate.getFullYear(), viewDate.getMonth());
+
+sourceOudOmmen.addEventListener('change', async () => {
+    historicalEventsMonthKey = '';
+    historicalEvents.hidden = true;
+    oudOmmenEventDates = new Set();
+    oudOmmenEventDetails = new Map();
+    renderCalendar();
+    await loadOudOmmenEventMarkers(viewDate.getFullYear(), viewDate.getMonth());
+});
 
 const infoButton = document.getElementById('infoButton');
 const infoPanel = document.getElementById('infoPanel');
