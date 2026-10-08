@@ -24,6 +24,7 @@ let selectedDate = null;
 let selectedDates = [];
 let selectedWeek = null;
 let historicalEventDates = new Set();
+let historicalEventDetails = new Map();
 let historicalEventsMonthKey = '';
 
 function pad(value) {
@@ -363,6 +364,7 @@ async function loadHistoricalEventMarkers(year, month) {
     const monthKey = `${year}-${pad(month + 1)}`;
     historicalEventsMonthKey = monthKey;
     historicalEventDates = new Set();
+    historicalEventDetails = new Map();
 
     const startDate = `${year}-${pad(month + 1)}-01T00:00:00Z`;
     const nextMonth = new Date(year, month + 1, 1);
@@ -381,7 +383,15 @@ async function loadHistoricalEventMarkers(year, month) {
 
         rows.forEach(row => {
             const value = row.date?.value;
-            if (value) historicalEventDates.add(value.slice(0, 10));
+            if (!value) return;
+            const key = value.slice(0, 10);
+            historicalEventDates.add(key);
+            if (!historicalEventDetails.has(key)) historicalEventDetails.set(key, []);
+            historicalEventDetails.get(key).push({
+                item: row.item?.value,
+                label: row.itemLabel?.value || 'Gebeurtenis',
+                description: row.description?.value || ''
+            });
         });
 
         if (historicalEventsMonthKey === monthKey) {
@@ -436,7 +446,35 @@ function renderHolidayList(year, month) {
     });
 }
 
+function renderHistoricalEventDetails(rows) {
+    historicalEvents.hidden = false;
+    historicalEvents.innerHTML = '<h3>Historische gebeurtenissen</h3>';
+    if (!rows.length) {
+        historicalEvents.innerHTML += '<div class="events-status">Geen gebeurtenissen gevonden</div>';
+        return;
+    }
+    const list = document.createElement('ul');
+    rows.slice(0, 12).forEach(row => {
+        const li = document.createElement('li');
+        const link = document.createElement('a');
+        link.href = row.item;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = row.label;
+        li.appendChild(link);
+        if (row.description) li.appendChild(document.createTextNode(' – ' + row.description));
+        list.appendChild(li);
+    });
+    historicalEvents.appendChild(list);
+}
+
 async function loadHistoricalEvents(date) {
+    const cached = historicalEventDetails.get(toDateKey(date));
+    if (cached) {
+        renderHistoricalEventDetails(cached);
+        return;
+    }
+
     historicalEvents.hidden = false;
     historicalEvents.innerHTML = '<div class="events-status">Historische gebeurtenissen laden…</div>';
 
@@ -448,8 +486,11 @@ async function loadHistoricalEvents(date) {
         if (!response.ok) throw new Error('Wikidata request failed');
         const data = await response.json();
         const rows = data.results.bindings || [];
-        historicalEvents.innerHTML = '<h3>Historische gebeurtenissen</h3>';
-        if (!rows.length) { historicalEvents.innerHTML += '<div class="events-status">Geen gebeurtenissen gevonden</div>'; return; }
+        if (!rows.length) { renderHistoricalEventDetails([]); return; }
+        const mappedRows = rows.map(row => ({ item: row.item.value, label: row.itemLabel?.value || 'Gebeurtenis', description: row.description?.value || '' }));
+        historicalEventDetails.set(toDateKey(date), mappedRows);
+        renderHistoricalEventDetails(mappedRows);
+        return;
         const list = document.createElement('ul');
         rows.forEach(row => {
             const li = document.createElement('li');
