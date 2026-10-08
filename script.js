@@ -387,6 +387,21 @@ async function loadWikidataEventMarkers(startDate, endDate, monthKey) {
     }
 }
 
+async function fetchOudOmmenPosts(url) {
+    try {
+        const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        if (response.ok) return await response.json();
+    } catch (error) {}
+    try {
+        const proxyUrl = 'https://r.jina.ai/' + url;
+        const response = await fetch(proxyUrl, { headers: { 'Accept': 'application/json' } });
+        if (!response.ok) throw new Error('OudOmmen proxy request failed');
+        return JSON.parse(await response.text());
+    } catch (error) {
+        return [];
+    }
+}
+
 async function loadOudOmmenEventMarkers(startDate, endDate, monthKey) {
     const apiStart = startDate.slice(0, 10) + 'T00:00:00';
     const apiEnd = endDate.slice(0, 10) + 'T23:59:59';
@@ -394,15 +409,15 @@ async function loadOudOmmenEventMarkers(startDate, endDate, monthKey) {
     try {
         const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
         if (!response.ok) throw new Error('OudOmmen request failed');
-        const firstPage = await response.json();
+        const firstPage = await fetchOudOmmenPosts(url);
         const totalPages = Math.min(Number(response.headers.get('X-WP-TotalPages')) || 1, 20);
         const pages = [firstPage];
 
         for (let page = 2; page <= totalPages; page++) {
             const pageUrl = url + '&page=' + page;
-            const pageResponse = await fetch(pageUrl, { headers: { 'Accept': 'application/json' } });
-            if (!pageResponse.ok) break;
-            pages.push(await pageResponse.json());
+            const pagePosts = await fetchOudOmmenPosts(pageUrl);
+            if (!pagePosts.length) break;
+            pages.push(pagePosts);
         }
 
         pages.flat().forEach(post => {
