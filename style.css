@@ -256,6 +256,10 @@ input:focus, select:focus {
     gap: 2px;
 }
 
+.calendar {
+    grid-auto-rows: 40px;
+}
+
 .weekday-header {
     text-align: center;
     font-size: 0.75rem;
@@ -379,6 +383,10 @@ input:focus, select:focus {
 
     .calendar-section {
         padding: 7px;
+    }
+
+    .calendar {
+        grid-auto-rows: 36px;
     }
 }
 
