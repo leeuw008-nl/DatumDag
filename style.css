@@ -406,3 +406,6 @@ body.info-open main {
 .calendar-day.highlight.historical-event .historical-event-dot {
     background: white;
 }
+
+
+.event-sources{margin-top:7px;padding-top:7px;border-top:1px solid rgba(0,0,0,.12);display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.78rem}.event-sources strong{font-size:.82rem}.event-sources label{display:inline-flex;align-items:center;gap:4px;cursor:pointer}.event-sources input{margin:0}
