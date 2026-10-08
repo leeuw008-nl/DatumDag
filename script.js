@@ -210,6 +210,7 @@ function updateFromDate() {
     clearWeekInputs();
     viewDate = new Date(date.getFullYear(), date.getMonth(), 1);
     renderCalendar();
+    loadHistoricalEvents(date);
 }
 
 function updateFromWeek() {
@@ -511,6 +512,7 @@ function renderCalendar() {
             selectedWeek = null;
             viewDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), 1);
             renderCalendar();
+            loadHistoricalEvents(cellDate);
         });
 
         calendar.appendChild(button);
