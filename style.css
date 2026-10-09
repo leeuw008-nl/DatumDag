@@ -76,8 +76,8 @@ body.info-open main { display: none; }
 
 /* Historische artikelen: duidelijker zichtbaar als apart paneel */
 .historical-events {
-    margin: 12px 0 10px;
-    padding: 12px;
+    margin: 6px 0 5px;
+    padding: 7px 9px;
     border: 2px solid rgba(102,126,234,.35);
     border-left: 5px solid #667eea;
     border-radius: 12px;
@@ -87,8 +87,8 @@ body.info-open main { display: none; }
     box-shadow: 0 3px 10px rgba(35,35,80,.08);
 }
 .historical-events h3 {
-    margin: 0 0 8px;
-    font-size: 1.08rem;
+    margin: 0 0 4px;
+    font-size: 1rem;
     color: #3730a3;
 }
 .historical-events ul {
@@ -103,7 +103,7 @@ body.info-open main { display: none; }
 .historical-events li:first-child { border-top: 0; }
 .historical-events a {
     display: block;
-    padding: 9px 4px;
+    padding: 5px 3px;
     color: #3730a3;
     font-weight: 650;
     line-height: 1.35;
@@ -115,4 +115,4 @@ body.info-open main { display: none; }
     font-weight: 700;
 }
 .historical-events a:hover { text-decoration: underline; }
-.historical-events .events-status { padding: 5px 0; }
+.historical-events .events-status { padding: 2px 0; }
