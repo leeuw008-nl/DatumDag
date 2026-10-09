@@ -22,6 +22,7 @@ let oudOmmenMonthCount = 0;
 let oudOmmenEventDates = new Set();
 let oudOmmenEventDetails = new Map();
 let historicalEventsMonthKey = '';
+let oudOmmenLoadRequest = 0;
 
 const maanden = [
     'januari','februari','maart','april','mei','juni',
@@ -217,7 +218,9 @@ function updateFromDate() {
     selectedWeek = null;
     clearWeekInputs();
     viewDate = new Date(date.getFullYear(), date.getMonth(), 1);
+    historicalEvents.hidden = true;
     renderCalendar();
+    loadOudOmmenEventMarkers(viewDate.getFullYear(), viewDate.getMonth());
 }
 
 function updateFromWeek() {
@@ -235,7 +238,9 @@ function updateFromWeek() {
 
     const monday = getDateFromISOWeek(weekData.week, weekData.year);
     viewDate = new Date(monday.getFullYear(), monday.getMonth(), 1);
+    historicalEvents.hidden = true;
     renderCalendar();
+    loadOudOmmenEventMarkers(viewDate.getFullYear(), viewDate.getMonth());
 }
 
 function parseDescription(value) {
@@ -511,6 +516,7 @@ async function loadOudOmmenEventMarkers(year, month) {
     const monthKey = year + '-' + pad(month + 1);
     if (historicalEventsMonthKey === monthKey) return;
     historicalEventsMonthKey = monthKey;
+    const requestId = ++oudOmmenLoadRequest;
     oudOmmenEventDates = new Set();
     oudOmmenEventDetails = new Map();
     historicalEvents.hidden = true;
@@ -546,6 +552,9 @@ async function loadOudOmmenEventMarkers(year, month) {
                 date.getMonth() === month;
         });
     }
+
+    // Negeer resultaten van een eerdere maand als de gebruiker inmiddels verder is gegaan.
+    if (requestId !== oudOmmenLoadRequest || monthKey !== historicalEventsMonthKey) return;
 
     posts.forEach(addOudOmmenPost);
     oudOmmenMonthCount = posts.length;
