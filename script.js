@@ -18,6 +18,8 @@ const historicalEvents = document.getElementById('historicalEvents');
 const oudOmmenCount = document.getElementById('oudOmmenCountHeader');
 let oudOmmenTotalCount = 0;
 let oudOmmenMonthCount = 0;
+let oudOmmenTotalLoading = true;
+let oudOmmenMonthLoading = false;
 
 let oudOmmenEventDates = new Set();
 let oudOmmenEventDetails = new Map();
@@ -411,6 +413,7 @@ async function fetchOudOmmenTotal() {
         const total = Number(data.total || 0);
         if (total > 0) oudOmmenTotalCount = total;
     } catch (error) {}
+    oudOmmenTotalLoading = false;
     updateOudOmmenCount();
 }
 
@@ -421,6 +424,7 @@ function updateOudOmmenCount() {
     } else {
         oudOmmenCount.textContent = 'OudOmmen.nl';
     }
+    syncOudOmmenCountVisibility();
 }
 
 async function fetchOudOmmenFeed() {
@@ -529,12 +533,16 @@ async function loadOudOmmenEventMarkers(year, month) {
     const monthKey = year + '-' + pad(month + 1);
     if (historicalEventsMonthKey === monthKey) return;
     historicalEventsMonthKey = monthKey;
+    oudOmmenMonthLoading = sourceOudOmmen.checked;
+    syncOudOmmenCountVisibility();
     const requestId = ++oudOmmenLoadRequest;
     oudOmmenEventDates = new Set();
     oudOmmenEventDetails = new Map();
     historicalEvents.hidden = true;
 
     if (!sourceOudOmmen.checked) {
+        oudOmmenMonthLoading = false;
+        syncOudOmmenCountVisibility();
         renderCalendar();
         return;
     }
@@ -569,6 +577,8 @@ async function loadOudOmmenEventMarkers(year, month) {
     // Negeer resultaten van een eerdere maand als de gebruiker inmiddels verder is gegaan.
     if (requestId !== oudOmmenLoadRequest || monthKey !== historicalEventsMonthKey) return;
 
+    oudOmmenMonthLoading = false;
+    syncOudOmmenCountVisibility();
     posts.forEach(addOudOmmenPost);
     oudOmmenMonthCount = posts.length;
     updateOudOmmenCount();
@@ -851,7 +861,8 @@ function syncOudOmmenCountVisibility() {
         // Verberg alleen de tekstkleur; zo blijven de vaste regelhoogte én de onderlijn zichtbaar.
         oudOmmenCount.hidden = false;
         oudOmmenCount.style.visibility = 'visible';
-        oudOmmenCount.style.color = showCount ? '#0056ad' : 'transparent';
+        oudOmmenCount.classList.toggle('is-loading', oudOmmenTotalLoading || oudOmmenMonthLoading);
+        oudOmmenCount.style.color = showCount ? '' : 'transparent';
     }
 }
 
