@@ -79,10 +79,10 @@ body.menu-open #infoPanel { display: none; }
 .menu-intro { font-size:.86rem; margin-bottom:8px; }
 .menu-option { display:flex; align-items:center; gap:10px; padding:11px 5px; border-top:1px solid rgba(0,0,0,.08); font-size:.95rem; cursor:pointer; }
 .menu-option input { width:20px; height:20px; min-width:20px; margin:0; accent-color:#0066cc; }
-.oudommen-count-header { display:flex; align-items:center; gap:5px; margin:0 0 5px; padding:6px 8px; font-size:.8rem; line-height:1.2; background:#003b73; color:#fff; font-weight:750; border-radius:6px; border-bottom:1px solid rgba(0,86,173,.14); }
-.oudommen-brand { color:#fff; }
-.oudommen-article-count { color:#fff; font-weight:650; }
-.oudommen-count-header.is-loading .oudommen-article-count { color:#f28c00; }
+.oudommen-count-header { margin:0 0 5px; padding:0 2px 3px; font-size:.8rem; line-height:1.2; color:#0056ad; font-weight:750; border-bottom:1px solid rgba(0,86,173,.14); }
+.oudommen-brand { color:inherit; }
+.oudommen-article-count { color:inherit; font-weight:inherit; }
+.oudommen-count-header.is-loading { color:#f28c00; }
 .oudommen-count-header.is-count-hidden .oudommen-brand,
 .oudommen-count-header.is-count-hidden .oudommen-article-count { color:transparent; }
 #eventSources { margin-top:7px; }
