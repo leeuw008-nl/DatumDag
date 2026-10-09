@@ -129,3 +129,7 @@ body.menu-open #infoPanel { display: none; }
 }
 .historical-events a:hover { text-decoration: underline; }
 .historical-events .events-status { padding: 2px 0; }
+
+
+/* Zorg dat verborgen onderdelen ook verborgen blijven ondanks component-layouts. */
+[hidden] { display: none !important; }
