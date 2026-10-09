@@ -141,3 +141,7 @@ body.menu-open #infoPanel { display: none; }
 
 /* Zorg dat verborgen onderdelen ook verborgen blijven ondanks component-layouts. */
 [hidden] { display: none !important; }
+
+
+/* De OudOmmen.nl-koptitel boven de kalenderartikelen niet tonen. */
+.oudommen-count-header { display: none !important; }
