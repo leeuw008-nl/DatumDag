@@ -1,9 +1,9 @@
-const CACHE_NAME = "oudommen-kalender-v21";
+const CACHE_NAME = "oudommen-kalender-v22";
 const APP_FILES = [
   "./",
   "./index.html",
-  "./style.css?v=20261009s20",
-  "./script.js?v=20261009s20",
+  "./style.css?v=20261009s21",
+  "./script.js?v=20261009s21",
   "./manifest.json"
 ];
 
