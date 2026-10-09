@@ -847,7 +847,7 @@ const menuSettings = [
     { id: 'showDateRow', selector: '.date-row', key: 'calendar-show-date' },
     { id: 'showWeekRow', selector: '.week-row', key: 'calendar-show-week' },
     { id: 'showDescriptionRow', selector: '.description-row, #descriptionMessage', key: 'calendar-show-description' },
-    { id: 'showHistoricalRow', selector: '#eventSources', key: 'calendar-show-historical' }
+    { id: 'showHistoricalRow', selector: '#eventSources, #oudOmmenCountHeader', key: 'calendar-show-historical' }
 ];
 
 function setInfoOpen(open) {
