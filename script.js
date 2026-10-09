@@ -848,9 +848,10 @@ function syncOudOmmenCountVisibility() {
     const historicalSetting = document.getElementById('showHistoricalRow');
     if (oudOmmenCount) {
         const showCount = sourceOudOmmen.checked && (!historicalSetting || historicalSetting.checked);
-        // Verberg alleen de tekst; de vaste regelhoogte blijft behouden.
+        // Verberg alleen de tekstkleur; zo blijven de vaste regelhoogte én de onderlijn zichtbaar.
         oudOmmenCount.hidden = false;
-        oudOmmenCount.style.visibility = showCount ? 'visible' : 'hidden';
+        oudOmmenCount.style.visibility = 'visible';
+        oudOmmenCount.style.color = showCount ? '#0056ad' : 'transparent';
     }
 }
 
