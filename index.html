@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kalender-OudOmmen</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css?v=20261008s11">
+    <link rel="stylesheet" href="style.css?v=20261009s2">
     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/365/365571.png">
 </head>
 <body>
@@ -70,13 +70,13 @@
                 </div>
                 <div class="weekday-header"><span>ma</span><span>di</span><span>wo</span><span>do</span><span>vr</span><span>za</span><span>zo</span></div>
                 <div id="calendar" class="calendar"></div>
+                <div id="historicalEvents" class="historical-events" hidden></div>
                 <div id="holidayList" class="holiday-list"></div>
                 <div class="event-sources"><strong>Historische artikelen</strong><label><input type="checkbox" id="sourceOudOmmen" checked> <span id="oudOmmenCount">OudOmmen.nl</span></label></div>
-                <div id="historicalEvents" class="historical-events" hidden></div>
             </section>
         </main>
     </div>
-    <script src="script.js?v=20261009s1"></script>
+    <script src="script.js?v=20261009s2"></script>
     <script>
         if ("serviceWorker" in navigator) {
             window.addEventListener("load", () => {
