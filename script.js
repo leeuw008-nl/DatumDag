@@ -847,7 +847,10 @@ const menuClose = document.getElementById('menuClose');
 function syncOudOmmenCountVisibility() {
     const historicalSetting = document.getElementById('showHistoricalRow');
     if (oudOmmenCount) {
-        oudOmmenCount.hidden = !sourceOudOmmen.checked || (historicalSetting && !historicalSetting.checked);
+        const showCount = sourceOudOmmen.checked && (!historicalSetting || historicalSetting.checked);
+        // Verberg alleen de tekst; de vaste regelhoogte blijft behouden.
+        oudOmmenCount.hidden = false;
+        oudOmmenCount.style.visibility = showCount ? 'visible' : 'hidden';
     }
 }
 
