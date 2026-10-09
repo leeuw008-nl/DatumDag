@@ -143,5 +143,3 @@ body.menu-open #infoPanel { display: none; }
 [hidden] { display: none !important; }
 
 
-/* De OudOmmen.nl-koptitel boven de kalenderartikelen niet tonen. */
-.oudommen-count-header { display: none !important; }
