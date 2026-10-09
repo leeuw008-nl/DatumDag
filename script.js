@@ -15,6 +15,7 @@ const nextMonth = document.getElementById('nextMonth');
 const holidayList = document.getElementById('holidayList');
 const sourceOudOmmen = document.getElementById('sourceOudOmmen');
 const historicalEvents = document.getElementById('historicalEvents');
+const oudOmmenCount = document.getElementById('oudOmmenCountHeader');
 let oudOmmenTotalCount = 0;
 let oudOmmenMonthCount = 0;
 let oudOmmenTotalLoading = true;
@@ -417,7 +418,13 @@ async function fetchOudOmmenTotal() {
 }
 
 function updateOudOmmenCount() {
-    // De zichtbare OudOmmen.nl-tellerkop is verwijderd; feed- en kalenderlogica blijven behouden.
+    if (!oudOmmenCount) return;
+    if (oudOmmenTotalCount > 0) {
+        oudOmmenCount.textContent = '(' + oudOmmenMonthCount + ' van ' + oudOmmenTotalCount + ' artikelen)';
+    } else {
+        oudOmmenCount.textContent = '';
+    }
+    syncOudOmmenCountVisibility();
 }
 
 async function fetchOudOmmenFeed() {
@@ -588,7 +595,7 @@ async function loadOudOmmenEventMarkers(year, month) {
 function renderOudOmmenDetails(key) {
     const rows = oudOmmenEventDetails.get(key) || [];
     historicalEvents.hidden = false;
-    historicalEvents.innerHTML = '';
+    historicalEvents.innerHTML = '<h3>OudOmmen.nl</h3>';
     if (!rows.length) {
         historicalEvents.innerHTML += '<div class="events-status">Geen artikelen gevonden</div>';
         return;
@@ -848,7 +855,15 @@ const menuButton = document.getElementById('menuButton');
 const menuPanel = document.getElementById('menuPanel');
 const menuClose = document.getElementById('menuClose');
 function syncOudOmmenCountVisibility() {
-    // Er is geen aparte OudOmmen.nl-kop meer; de artikelweergave wordt elders beheerd.
+    const historicalSetting = document.getElementById('showHistoricalRow');
+    if (oudOmmenCount) {
+        const showCount = sourceOudOmmen.checked && (!historicalSetting || historicalSetting.checked);
+        // Verberg alleen de tekstkleur; zo blijven de vaste regelhoogte én de onderlijn zichtbaar.
+        oudOmmenCount.hidden = false;
+        oudOmmenCount.style.visibility = 'visible';
+        oudOmmenCount.classList.toggle('is-loading', oudOmmenTotalLoading || oudOmmenMonthLoading);
+        oudOmmenCount.style.color = showCount ? '' : 'transparent';
+    }
 }
 
 const menuSettings = [
