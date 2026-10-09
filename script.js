@@ -420,9 +420,9 @@ async function fetchOudOmmenTotal() {
 function updateOudOmmenCount() {
     if (!oudOmmenCount) return;
     if (oudOmmenTotalCount > 0) {
-        oudOmmenCount.textContent = '(' + oudOmmenMonthCount + ' van ' + oudOmmenTotalCount + ' artikelen)';
+        oudOmmenCount.textContent = 'OudOmmen.nl (' + oudOmmenMonthCount + ' van ' + oudOmmenTotalCount + ' artikelen)';
     } else {
-        oudOmmenCount.textContent = '';
+        oudOmmenCount.textContent = 'OudOmmen.nl';
     }
     syncOudOmmenCountVisibility();
 }
