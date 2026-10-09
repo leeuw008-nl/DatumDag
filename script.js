@@ -23,6 +23,7 @@ let oudOmmenEventDates = new Set();
 let oudOmmenEventDetails = new Map();
 let historicalEventsMonthKey = '';
 let oudOmmenLoadRequest = 0;
+let selectedArticleDateKey = '';
 
 const maanden = [
     'januari','februari','maart','april','mei','juni',
@@ -560,6 +561,13 @@ async function loadOudOmmenEventMarkers(year, month) {
     oudOmmenMonthCount = posts.length;
     updateOudOmmenCount();
     renderCalendar();
+
+    // Toon het eerder gekozen artikel opnieuw zodra de bron is aangezet en geladen.
+    if (sourceOudOmmen.checked && selectedArticleDateKey &&
+        selectedArticleDateKey.slice(0, 7) === monthKey &&
+        oudOmmenEventDates.has(selectedArticleDateKey)) {
+        renderOudOmmenDetails(selectedArticleDateKey);
+    }
 }
 
 function renderOudOmmenDetails(key) {
@@ -711,7 +719,10 @@ function renderCalendar() {
         button.addEventListener('click', () => {
             historicalEvents.hidden = true;
             historicalEvents.innerHTML = '';
-            if (oudOmmenEventDates.has(toDateKey(cellDate))) renderOudOmmenDetails(toDateKey(cellDate));
+            selectedArticleDateKey = oudOmmenEventDates.has(toDateKey(cellDate))
+                ? toDateKey(cellDate)
+                : '';
+            if (selectedArticleDateKey) renderOudOmmenDetails(selectedArticleDateKey);
             setDateInputs(cellDate);
             clearWeekInputs();
             selectedDate = new Date(cellDate);
@@ -806,6 +817,10 @@ sourceOudOmmen.addEventListener('change', async () => {
     historicalEvents.hidden = true;
     oudOmmenEventDates = new Set();
     oudOmmenEventDetails = new Map();
+    if (!sourceOudOmmen.checked) {
+        oudOmmenMonthCount = 0;
+        updateOudOmmenCount();
+    }
     renderCalendar();
     await loadOudOmmenEventMarkers(viewDate.getFullYear(), viewDate.getMonth());
 });
