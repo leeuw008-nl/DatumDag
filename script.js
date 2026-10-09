@@ -825,6 +825,7 @@ renderCalendar();
 loadOudOmmenEventMarkers(viewDate.getFullYear(), viewDate.getMonth());
 
 sourceOudOmmen.addEventListener('change', async () => {
+    syncOudOmmenCountVisibility();
     historicalEventsMonthKey = '';
     historicalEvents.hidden = true;
     oudOmmenEventDates = new Set();
@@ -843,11 +844,18 @@ const infoClose = document.getElementById('infoClose');
 const menuButton = document.getElementById('menuButton');
 const menuPanel = document.getElementById('menuPanel');
 const menuClose = document.getElementById('menuClose');
+function syncOudOmmenCountVisibility() {
+    const historicalSetting = document.getElementById('showHistoricalRow');
+    if (oudOmmenCount) {
+        oudOmmenCount.hidden = !sourceOudOmmen.checked || (historicalSetting && !historicalSetting.checked);
+    }
+}
+
 const menuSettings = [
     { id: 'showDateRow', selector: '.date-row', key: 'calendar-show-date' },
     { id: 'showWeekRow', selector: '.week-row', key: 'calendar-show-week' },
     { id: 'showDescriptionRow', selector: '.description-row, #descriptionMessage', key: 'calendar-show-description' },
-    { id: 'showHistoricalRow', selector: '#eventSources, #oudOmmenCountHeader', key: 'calendar-show-historical' }
+    { id: 'showHistoricalRow', selector: '#eventSources', key: 'calendar-show-historical' }
 ];
 
 function setInfoOpen(open) {
@@ -874,6 +882,7 @@ menuSettings.forEach(setting => {
         document.querySelectorAll(setting.selector).forEach(element => {
             element.hidden = !control.checked;
         });
+        if (setting.id === 'showHistoricalRow') syncOudOmmenCountVisibility();
         try { localStorage.setItem(setting.key, String(control.checked)); } catch (error) {}
     };
     control.addEventListener('change', apply);
