@@ -595,7 +595,7 @@ async function loadOudOmmenEventMarkers(year, month) {
 function renderOudOmmenDetails(key) {
     const rows = oudOmmenEventDetails.get(key) || [];
     historicalEvents.hidden = false;
-    historicalEvents.innerHTML = '<h3>OudOmmen.nl</h3>';
+    historicalEvents.innerHTML = '';
     if (!rows.length) {
         historicalEvents.innerHTML += '<div class="events-status">Geen artikelen gevonden</div>';
         return;
