@@ -15,7 +15,7 @@ const nextMonth = document.getElementById('nextMonth');
 const holidayList = document.getElementById('holidayList');
 const sourceOudOmmen = document.getElementById('sourceOudOmmen');
 const historicalEvents = document.getElementById('historicalEvents');
-const oudOmmenCount = document.getElementById('oudOmmenCount');
+const oudOmmenCount = document.getElementById('oudOmmenCountHeader');
 let oudOmmenTotalCount = 0;
 let oudOmmenMonthCount = 0;
 
@@ -840,16 +840,47 @@ sourceOudOmmen.addEventListener('change', async () => {
 const infoButton = document.getElementById('infoButton');
 const infoPanel = document.getElementById('infoPanel');
 const infoClose = document.getElementById('infoClose');
+const menuButton = document.getElementById('menuButton');
+const menuPanel = document.getElementById('menuPanel');
+const menuClose = document.getElementById('menuClose');
+const menuSettings = [
+    { id: 'showDateRow', selector: '.date-row', key: 'calendar-show-date' },
+    { id: 'showWeekRow', selector: '.week-row', key: 'calendar-show-week' },
+    { id: 'showDescriptionRow', selector: '.description-row, #descriptionMessage', key: 'calendar-show-description' },
+    { id: 'showHistoricalRow', selector: '#eventSources', key: 'calendar-show-historical' }
+];
 
 function setInfoOpen(open) {
     infoPanel.hidden = !open;
+    menuPanel.hidden = true;
     document.body.classList.toggle('info-open', open);
+    document.body.classList.remove('menu-open');
 }
 
-infoButton.addEventListener('click', () => {
-    setInfoOpen(infoPanel.hidden);
+function setMenuOpen(open) {
+    menuPanel.hidden = !open;
+    infoPanel.hidden = true;
+    document.body.classList.toggle('menu-open', open);
+    document.body.classList.remove('info-open');
+}
+
+menuSettings.forEach(setting => {
+    const control = document.getElementById(setting.id);
+    try {
+        const saved = localStorage.getItem(setting.key);
+        if (saved !== null) control.checked = saved === 'true';
+    } catch (error) {}
+    const apply = () => {
+        document.querySelectorAll(setting.selector).forEach(element => {
+            element.hidden = !control.checked;
+        });
+        try { localStorage.setItem(setting.key, String(control.checked)); } catch (error) {}
+    };
+    control.addEventListener('change', apply);
+    apply();
 });
 
-infoClose.addEventListener('click', () => {
-    setInfoOpen(false);
-});
+menuButton.addEventListener('click', () => setMenuOpen(menuPanel.hidden));
+menuClose.addEventListener('click', () => setMenuOpen(false));
+infoButton.addEventListener('click', () => setInfoOpen(infoPanel.hidden));
+infoClose.addEventListener('click', () => setInfoOpen(false));
