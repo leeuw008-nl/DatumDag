@@ -217,11 +217,23 @@ function updateFromDate() {
 
     selectedDate = date;
     selectedWeek = null;
+    selectedArticleDateKey = toDateKey(date);
     clearWeekInputs();
     viewDate = new Date(date.getFullYear(), date.getMonth(), 1);
     historicalEvents.hidden = true;
     renderCalendar();
-    loadOudOmmenEventMarkers(viewDate.getFullYear(), viewDate.getMonth());
+
+    const monthKey = date.getFullYear() + '-' + pad(date.getMonth() + 1);
+    if (historicalEventsMonthKey === monthKey) {
+        // De maandgegevens zijn al geladen: toon direct de artikelen van deze datum.
+        if (sourceOudOmmen.checked && oudOmmenEventDates.has(selectedArticleDateKey)) {
+            renderOudOmmenDetails(selectedArticleDateKey);
+        } else {
+            historicalEvents.hidden = true;
+        }
+    } else {
+        loadOudOmmenEventMarkers(viewDate.getFullYear(), viewDate.getMonth());
+    }
 }
 
 function updateFromWeek() {
