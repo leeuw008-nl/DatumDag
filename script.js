@@ -419,10 +419,11 @@ async function fetchOudOmmenTotal() {
 
 function updateOudOmmenCount() {
     if (!oudOmmenCount) return;
-    if (oudOmmenTotalCount > 0) {
-        oudOmmenCount.textContent = 'OudOmmen.nl (' + oudOmmenMonthCount + ' van ' + oudOmmenTotalCount + ' artikelen)';
-    } else {
-        oudOmmenCount.textContent = 'OudOmmen.nl';
+    const articleCount = oudOmmenCount.querySelector('.oudommen-article-count');
+    if (articleCount) {
+        articleCount.textContent = oudOmmenTotalCount > 0
+            ? '(' + oudOmmenMonthCount + ' van ' + oudOmmenTotalCount + ' artikelen)'
+            : '';
     }
     syncOudOmmenCountVisibility();
 }
@@ -862,7 +863,7 @@ function syncOudOmmenCountVisibility() {
         oudOmmenCount.hidden = false;
         oudOmmenCount.style.visibility = 'visible';
         oudOmmenCount.classList.toggle('is-loading', oudOmmenTotalLoading || oudOmmenMonthLoading);
-        oudOmmenCount.style.color = showCount ? '' : 'transparent';
+        oudOmmenCount.classList.toggle('is-count-hidden', !showCount);
     }
 }
 
