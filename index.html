@@ -5,15 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kalender-OudOmmen</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css?v=20261009s3">
+    <link rel="stylesheet" href="style.css?v=20261009s4">
     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/365/365571.png">
 </head>
 <body>
     <div class="container">
         <header>
+            <button type="button" id="menuButton" aria-label="Menu openen">☰</button>
             <h1>Kalender-OudOmmen</h1>
             <button type="button" id="infoButton" aria-label="Handleiding">i</button>
         </header>
+        <section id="menuPanel" class="menu-panel" hidden>
+            <div class="menu-header">
+                <h2>Menu-pagina</h2>
+                <button type="button" id="menuClose" aria-label="Menu sluiten">×</button>
+            </div>
+            <p class="menu-intro">Kies welke onderdelen zichtbaar zijn op het hoofdscherm.</p>
+            <label class="menu-option"><input type="checkbox" id="showDateRow" checked><span>Regel 1 – Datum</span></label>
+            <label class="menu-option"><input type="checkbox" id="showWeekRow" checked><span>Regel 2 – Week</span></label>
+            <label class="menu-option"><input type="checkbox" id="showDescriptionRow" checked><span>Regel 3 – Omschr.</span></label>
+            <label class="menu-option"><input type="checkbox" id="showHistoricalRow" checked><span>Onderste regel – Historische artikelen</span></label>
+        </section>
         <section id="infoPanel" class="info-panel" hidden>
             <div class="info-header">
                 <h2>Handleiding</h2>
@@ -43,7 +55,7 @@
             </div>
         </section>
         <main>
-            <section class="input-section">
+            <section class="input-section" id="inputSection">
                 <div class="input-row date-row">
                     <label>Datum</label>
                     <input type="number" id="dayInput" min="1" max="31" placeholder="Dag">
@@ -63,6 +75,7 @@
                 <div id="descriptionMessage" class="description-message" role="status" aria-live="polite"></div>
             </section>
             <section class="calendar-section">
+                <div id="oudOmmenCountHeader" class="oudommen-count-header">OudOmmen.nl</div>
                 <div class="calendar-header">
                     <button id="prevMonth" aria-label="Vorige maand">‹</button>
                     <div><strong id="calendarMonth"></strong><span id="calendarWeekInfo"></span></div>
@@ -72,11 +85,11 @@
                 <div id="calendar" class="calendar"></div>
                 <div id="historicalEvents" class="historical-events" hidden></div>
                 <div id="holidayList" class="holiday-list"></div>
-                <div class="event-sources"><strong>Historische artikelen</strong><label><input type="checkbox" id="sourceOudOmmen" checked> <span id="oudOmmenCount">OudOmmen.nl</span></label></div>
+                <div class="event-sources" id="eventSources"><strong>Historische artikelen</strong><label><input type="checkbox" id="sourceOudOmmen" checked> <span>Toon publicatiedagen</span></label></div>
             </section>
         </main>
     </div>
-    <script src="script.js?v=20261009s3"></script>
+    <script src="script.js?v=20261009s4"></script>
     <script>
         if ("serviceWorker" in navigator) {
             window.addEventListener("load", () => {
